@@ -12,7 +12,7 @@ beforeEach(() => {
     <div id="app">
       <section id="install">
         <ol class="steps">
-          <li class="step step-featured"><div class="step-content">Bookmarklet</div></li>
+          <li class="step step-featured"><div class="step-content"><a id="bookmarklet" href="javascript:void(0);">Pinment</a></div></li>
           <li class="step"><div class="step-content">Navigate</div></li>
           <li class="step"><div class="step-content">Drop pins</div></li>
           <li class="step"><div class="step-content">Share</div></li>
@@ -384,5 +384,38 @@ describe('init', () => {
     const errorEl = document.querySelector('.viewer-error');
     expect(errorEl).not.toBeNull();
     expect(errorEl.textContent).toContain('corrupted');
+  });
+
+  it('sets bookmarklet link href to a dynamic loader', () => {
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, hash: '', origin: 'https://example.com' },
+      writable: true,
+    });
+    init();
+    const link = document.getElementById('bookmarklet');
+    const href = decodeURIComponent(link.href);
+    expect(href).toContain('javascript:');
+    expect(href).toContain('pinment-bookmarklet.js');
+    expect(href).toContain('createElement');
+  });
+
+  it('includes cache-busting param in loader URL', () => {
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, hash: '', origin: 'https://example.com' },
+      writable: true,
+    });
+    init();
+    const link = document.getElementById('bookmarklet');
+    const href = decodeURIComponent(link.href);
+    expect(href).toContain('?v=');
+  });
+
+  it('works when bookmarklet link is not present', () => {
+    document.getElementById('bookmarklet').remove();
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, hash: '' },
+      writable: true,
+    });
+    expect(() => init()).not.toThrow();
   });
 });

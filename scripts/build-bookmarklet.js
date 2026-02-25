@@ -2,7 +2,8 @@
  * Build script for the Pinment bookmarklet
  *
  * Bundles src/bookmarklet/index.js and its dependencies into a single
- * minified IIFE, then wraps it as a javascript: URI.
+ * minified IIFE served as a standalone JS file. The hub site's app.js
+ * generates a tiny loader that fetches this file at runtime.
  */
 import { build } from 'esbuild';
 import { writeFileSync, mkdirSync } from 'fs';

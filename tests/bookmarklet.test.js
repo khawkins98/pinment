@@ -418,6 +418,13 @@ describe('createPanel', () => {
     expect(onImport).toHaveBeenCalledOnce();
   });
 
+  it('renders version info in footer', () => {
+    const panel = createPanel([]);
+    const version = panel.querySelector('.pinment-version');
+    expect(version).not.toBeNull();
+    expect(version.textContent).toMatch(/^v\d+\.\d+\.\d+ · \d{4}-\d{2}-\d{2}$/);
+  });
+
   it('renders reply button in editable mode', () => {
     const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '' }];
     const panel = createPanel(pins, { editable: true });
