@@ -2,6 +2,8 @@
 
 Pin comments to any live webpage. Share the annotations as a single URL. No backend, no accounts, no database.
 
+**Try it:** [khawkins98.github.io/pinment](https://khawkins98.github.io/pinment/) | **Source:** [github.com/khawkins98/pinment](https://github.com/khawkins98/pinment)
+
 ## How it works
 
 1. **Add the bookmarklet** -- drag the Pinment button to your bookmarks bar
@@ -100,6 +102,17 @@ Pins anchor to DOM elements via CSS selectors (`s`) with offset ratios (`ox`/`oy
 - **DOM changes**: If the page DOM changes significantly, selectors may not resolve (falls back to pixel coordinates with a warning badge)
 - **No real-time collaboration**: Users share URLs sequentially via chat/email
 
+## Background & inspiration
+
+Pinment grew out of frustration with existing webpage feedback tools -- they're either paid services requiring accounts and logins, or heavyweight browser extensions. I wanted something free, simple, and stateless: drop pins on a page, share a URL, done.
+
+Inspired by:
+
+- The URL-as-state pattern from [Ahmad El-Alfy](https://alfy.blog/2025/10/31/your-url-is-your-state.html) -- the idea that the URL can be the entire persistence layer
+- [Buffertab](https://github.com/AlexW00/Buffertab) -- using compressed URL fragments to store structured data without a backend
+- [Inkash](https://github.com/taqui-786/inkash) -- bookmarklet-driven page annotation
+- [Hypothesis](https://web.hypothes.is/) -- open web annotation as a concept
+
 ## License
 
-MIT
+[MIT](LICENSE) -- Copyright (c) 2026 Ken Hawkins
