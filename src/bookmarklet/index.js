@@ -5,8 +5,9 @@
  * allows pin placement, and provides share/restore functionality.
  * All DOM elements use the pinment- class namespace to avoid conflicts.
  */
-import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal } from './ui.js';
-import { compress, parseShareUrl, createShareUrl, estimateUrlSize, SCHEMA_VERSION, MAX_URL_BYTES } from '../state.js';
+import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal, createMinimizedButton, createExitConfirmModal } from './ui.js';
+import { compress, parseShareUrl, validateState, createShareUrl, estimateUrlSize, SCHEMA_VERSION, MAX_URL_BYTES } from '../state.js';
+import { detectEnv } from '../selector.js';
 const STORAGE_KEY_AUTHOR = 'pinment-author';
 const PANEL_ID = 'pinment-panel';
 const STYLE_ID = 'pinment-styles';
@@ -25,7 +26,11 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     nextId: 1,
     pinsVisible: true,
     viewportWidth: window.innerWidth,
+    env: detectEnv(),
   };
+
+  let panelMinimized = false;
+  const MINIMIZED_BTN_ID = 'pinment-minimized-btn';
 
   // Inject styles
   const styleEl = document.createElement('style');
@@ -66,11 +71,12 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       return;
     }
     if (shareUrl) {
-      const loaded = parseShareUrl(shareUrl);
+      const raw = parseShareUrl(shareUrl);
+      const loaded = raw ? validateState(raw) : null;
       if (loaded) {
         for (const pin of loaded.pins) {
           state.pins.push(pin);
-          const el = createPinElement(pin, state.viewportWidth);
+          const el = createPinElement(pin);
           el.style.pointerEvents = 'auto';
           el.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -79,8 +85,9 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
           pinContainer.appendChild(el);
         }
         state.nextId = loaded.pins.length > 0 ? Math.max(...loaded.pins.map((p) => p.id)) + 1 : 1;
-        if (loaded.viewport && loaded.viewport !== state.viewportWidth) {
-          showViewportWarning(loaded.viewport);
+        if (loaded.env) {
+          // Defer env banner until panel is rendered
+          setTimeout(() => showEnvBanner(loaded.env), 0);
         }
       }
     }
@@ -100,22 +107,20 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       e.preventDefault();
       e.stopPropagation();
 
-      const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
-      const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-      const pageX = e.clientX + scrollX;
-      const pageY = e.clientY + scrollY;
-
-      const pos = calculatePinPosition(pageX, pageY, state.viewportWidth);
+      const pos = calculatePinPosition(e.clientX, e.clientY, overlay, pinContainer);
       const pin = {
         id: state.nextId++,
-        x: pos.x,
-        y: pos.y,
+        s: pos.s,
+        ox: pos.ox,
+        oy: pos.oy,
+        fx: pos.fx,
+        fy: pos.fy,
         author: authorName,
         text: '',
       };
       state.pins.push(pin);
 
-      const el = createPinElement(pin, state.viewportWidth);
+      const el = createPinElement(pin);
       el.style.pointerEvents = 'auto';
       el.addEventListener('click', (ev) => {
         ev.stopPropagation();
@@ -140,7 +145,8 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       editable: true,
       onShare: handleShare,
       onToggle: handleToggle,
-      onClose: deactivate,
+      onMinimize: minimizePanel,
+      onExit: handleExit,
       onSave: handleSave,
       onDelete: handleDelete,
     });
@@ -191,6 +197,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       v: SCHEMA_VERSION,
       url: window.location.href.split('#')[0],
       viewport: state.viewportWidth,
+      env: state.env,
       pins: state.pins,
     };
   }
@@ -243,13 +250,20 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     }
   }
 
-  function showViewportWarning(originalViewport) {
+  function showEnvBanner(env) {
     const panel = document.getElementById(PANEL_ID);
-    if (!panel) return;
-    const warning = document.createElement('div');
-    warning.className = 'pinment-viewport-warning';
-    warning.textContent = `These annotations were created at ${originalViewport}px viewport width. Your current viewport is ${state.viewportWidth}px \u2014 pins may appear shifted.`;
-    panel.insertBefore(warning, panel.children[1] || null);
+    if (!panel || !env) return;
+    const banner = document.createElement('div');
+    banner.className = 'pinment-env-banner';
+    const parts = [];
+    if (env.ua) parts.push('Browser: ' + env.ua);
+    if (env.vp) parts.push('Viewport: ' + env.vp[0] + '\u00d7' + env.vp[1]);
+    if (env.dt) {
+      const labels = { d: 'Desktop', t: 'Tablet', m: 'Mobile' };
+      parts.push(labels[env.dt] || env.dt);
+    }
+    banner.textContent = 'Original review: ' + parts.join(' \u2022 ');
+    panel.insertBefore(banner, panel.children[1] || null);
   }
 
   function updateCapacity(panel) {
@@ -290,6 +304,48 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     }
   }
 
+  function minimizePanel() {
+    panelMinimized = true;
+    const panel = document.getElementById(PANEL_ID);
+    if (panel) panel.style.display = 'none';
+    const overlay = document.getElementById(OVERLAY_ID);
+    if (overlay) overlay.remove();
+    const btn = createMinimizedButton(restorePanel);
+    btn.id = MINIMIZED_BTN_ID;
+    document.body.appendChild(btn);
+  }
+
+  function restorePanel() {
+    panelMinimized = false;
+    const btn = document.getElementById(MINIMIZED_BTN_ID);
+    if (btn) btn.remove();
+    const panel = document.getElementById(PANEL_ID);
+    if (panel) panel.style.display = '';
+    if (!document.getElementById(OVERLAY_ID)) {
+      enablePinMode();
+    }
+  }
+
+  function handleExit() {
+    if (state.pins.length === 0) {
+      deactivate();
+      return;
+    }
+    const { modal } = createExitConfirmModal({
+      onCopyAndExit: () => {
+        handleShare();
+        deactivate();
+      },
+      onExitWithout: () => {
+        deactivate();
+      },
+      onCancel: () => {
+        // Do nothing, modal removes itself
+      },
+    });
+    document.body.appendChild(modal);
+  }
+
   function deactivate() {
     const overlay = document.getElementById(OVERLAY_ID);
     if (overlay) overlay.remove();
@@ -299,5 +355,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     if (style) style.remove();
     const container = document.getElementById(PIN_CONTAINER_ID);
     if (container) container.remove();
+    const minBtn = document.getElementById(MINIMIZED_BTN_ID);
+    if (minBtn) minBtn.remove();
   }
 })();

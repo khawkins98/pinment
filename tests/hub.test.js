@@ -2,6 +2,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderViewer, parseHashData, renderError, init } from '../js/app.js';
 import { createState, compress } from '../src/state.js';
 
+// Helper to create v2-format pins
+function v2Pin(overrides = {}) {
+  return { id: 1, s: '#main>p', ox: 0.5, oy: 0.3, fx: 720, fy: 200, author: 'FL', text: 'Test', ...overrides };
+}
+
 beforeEach(() => {
   document.body.innerHTML = `
     <div id="app">
@@ -36,7 +41,7 @@ describe('parseHashData', () => {
 
   it('parses valid compressed data from hash', () => {
     const state = createState('https://example.com', 1440, [
-      { id: 1, x: 0.5, y: 200, author: 'FL', text: 'Test comment' },
+      v2Pin({ id: 1, text: 'Test comment' }),
     ]);
     const hash = `#data=${compress(state)}`;
     const result = parseHashData(hash);
@@ -46,12 +51,24 @@ describe('parseHashData', () => {
   it('returns null for corrupted data', () => {
     expect(parseHashData('#data=corrupted-garbage')).toBeNull();
   });
+
+  it('migrates v1 data to v2 on parse', () => {
+    // Manually create v1 compressed data
+    const v1State = { v: 1, url: 'https://example.com', viewport: 1440, pins: [
+      { id: 1, x: 0.5, y: 200, author: 'FL', text: 'Test' },
+    ]};
+    const hash = `#data=${compress(v1State)}`;
+    const result = parseHashData(hash);
+    expect(result.v).toBe(2);
+    expect(result.pins[0].fx).toBe(720);
+    expect(result.pins[0].s).toBeNull();
+  });
 });
 
 describe('renderViewer', () => {
   it('shows the viewer section', () => {
     const state = createState('https://example.com/page', 1440, [
-      { id: 1, x: 0.5, y: 200, author: 'FL', text: 'Fix this' },
+      v2Pin({ id: 1, text: 'Fix this' }),
     ]);
     renderViewer(state);
     const viewer = document.getElementById('viewer');
@@ -73,32 +90,62 @@ describe('renderViewer', () => {
     expect(link.href).toBe('https://example.com/page');
   });
 
-  it('displays viewport width', () => {
+  it('displays viewport width when no env data', () => {
     const state = createState('https://example.com', 1440, []);
     renderViewer(state);
     const meta = document.getElementById('review-meta');
     expect(meta.textContent).toContain('1440');
   });
 
+  it('displays env metadata when present', () => {
+    const state = createState('https://example.com', 1440, [],
+      { ua: 'C/130', vp: [1440, 900], dt: 'd' });
+    renderViewer(state);
+    const meta = document.getElementById('review-meta');
+    expect(meta.textContent).toContain('C/130');
+    expect(meta.textContent).toContain('1440');
+    expect(meta.textContent).toContain('Desktop');
+  });
+
   it('lists all pins with their details', () => {
     const state = createState('https://example.com', 1440, [
-      { id: 1, x: 0.5, y: 200, author: 'FL', text: 'Fix heading' },
-      { id: 2, x: 0.3, y: 400, author: 'KH', text: 'Add alt text' },
+      v2Pin({ id: 1, text: 'Fix heading' }),
+      v2Pin({ id: 2, author: 'KH', text: 'Add alt text' }),
     ]);
     renderViewer(state);
     const items = document.querySelectorAll('#review-pins [role="listitem"]');
     expect(items.length).toBe(2);
   });
 
-  it('shows pin number, author, comment, and coordinates', () => {
+  it('shows pin number, author, and comment', () => {
     const state = createState('https://example.com', 1440, [
-      { id: 1, x: 0.45, y: 832, author: 'FL', text: 'Wrong heading' },
+      v2Pin({ id: 1, author: 'FL', text: 'Wrong heading' }),
     ]);
     renderViewer(state);
     const item = document.querySelector('#review-pins [role="listitem"]');
     expect(item.textContent).toContain('1');
     expect(item.textContent).toContain('FL');
     expect(item.textContent).toContain('Wrong heading');
+  });
+
+  it('shows selector info for element-anchored pins', () => {
+    const state = createState('https://example.com', 1440, [
+      v2Pin({ id: 1, s: '#main>h2', text: 'Fix this' }),
+    ]);
+    renderViewer(state);
+    const coords = document.querySelector('.review-pin-coords');
+    expect(coords.textContent).toContain('Anchored to');
+    expect(coords.textContent).toContain('#main>h2');
+  });
+
+  it('shows pixel fallback info for pins without selector', () => {
+    const state = createState('https://example.com', 1440, [
+      v2Pin({ id: 1, s: null, ox: null, oy: null, fx: 720, fy: 200, text: 'Fallback pin' }),
+    ]);
+    renderViewer(state);
+    const coords = document.querySelector('.review-pin-coords');
+    expect(coords.textContent).toContain('pixel fallback');
+    expect(coords.textContent).toContain('720');
   });
 
   it('collapses install to only the bookmarklet step when showing viewer', () => {
@@ -125,7 +172,7 @@ describe('renderViewer', () => {
 
   it('displays singular "annotation" for a single pin', () => {
     const state = createState('https://example.com', 1440, [
-      { id: 1, x: 0.5, y: 200, author: '', text: 'Only one' },
+      v2Pin({ id: 1, text: 'Only one' }),
     ]);
     renderViewer(state);
     const meta = document.getElementById('review-meta');
@@ -135,8 +182,8 @@ describe('renderViewer', () => {
 
   it('displays plural "annotations" for multiple pins', () => {
     const state = createState('https://example.com', 1440, [
-      { id: 1, x: 0.5, y: 200, author: '', text: 'First' },
-      { id: 2, x: 0.3, y: 400, author: '', text: 'Second' },
+      v2Pin({ id: 1, text: 'First' }),
+      v2Pin({ id: 2, text: 'Second' }),
     ]);
     renderViewer(state);
     const meta = document.getElementById('review-meta');
@@ -145,12 +192,11 @@ describe('renderViewer', () => {
 
   it('handles pins with empty author', () => {
     const state = createState('https://example.com', 1440, [
-      { id: 1, x: 0.5, y: 200, author: '', text: 'No author pin' },
+      v2Pin({ id: 1, author: '', text: 'No author pin' }),
     ]);
     renderViewer(state);
     const item = document.querySelector('#review-pins [role="listitem"]');
     expect(item.textContent).toContain('No author pin');
-    // Author span should exist but be empty
     const authorEl = item.querySelector('.review-pin-author');
     expect(authorEl.textContent).toBe('');
   });
@@ -158,7 +204,6 @@ describe('renderViewer', () => {
   it('does not throw when DOM elements are missing', () => {
     document.body.innerHTML = '<div id="app"></div>';
     const state = createState('https://example.com', 1440, []);
-    // Should not throw even if #viewer, #review-meta, etc. are missing
     expect(() => renderViewer(state)).not.toThrow();
   });
 
@@ -212,9 +257,8 @@ describe('renderError', () => {
 describe('init', () => {
   it('renders viewer when hash contains valid data', () => {
     const state = createState('https://example.com', 1440, [
-      { id: 1, x: 0.5, y: 200, author: 'FL', text: 'Test' },
+      v2Pin({ id: 1, text: 'Test' }),
     ]);
-    // Set location hash before init
     Object.defineProperty(window, 'location', {
       value: { ...window.location, hash: `#data=${compress(state)}` },
       writable: true,

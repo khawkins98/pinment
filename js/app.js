@@ -50,9 +50,22 @@ export function renderViewer(state) {
   urlP.appendChild(urlLink);
   meta.appendChild(urlP);
 
-  const viewportP = document.createElement('p');
-  viewportP.textContent = `Viewport: ${state.viewport}px`;
-  meta.appendChild(viewportP);
+  if (state.env) {
+    const envP = document.createElement('p');
+    const parts = [];
+    if (state.env.ua) parts.push('Browser: ' + state.env.ua);
+    if (state.env.vp) parts.push('Viewport: ' + state.env.vp[0] + '\u00d7' + state.env.vp[1]);
+    if (state.env.dt) {
+      const labels = { d: 'Desktop', t: 'Tablet', m: 'Mobile' };
+      parts.push(labels[state.env.dt] || state.env.dt);
+    }
+    envP.textContent = parts.join(' \u2022 ');
+    meta.appendChild(envP);
+  } else {
+    const viewportP = document.createElement('p');
+    viewportP.textContent = `Viewport: ${state.viewport}px`;
+    meta.appendChild(viewportP);
+  }
 
   const pinCountP = document.createElement('p');
   pinCountP.textContent = `${state.pins.length} annotation${state.pins.length !== 1 ? 's' : ''}`;
@@ -119,7 +132,11 @@ export function renderViewer(state) {
 
     const coords = document.createElement('p');
     coords.className = 'review-pin-coords';
-    coords.textContent = `Position: ${Math.round(pin.x * 100)}% from left, ${pin.y}px from top`;
+    if (pin.s) {
+      coords.textContent = `Anchored to: ${pin.s}`;
+    } else {
+      coords.textContent = `Position: ${Math.round(pin.fx)}px, ${Math.round(pin.fy)}px (pixel fallback)`;
+    }
     item.appendChild(coords);
 
     pinsList.appendChild(item);
