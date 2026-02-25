@@ -327,7 +327,7 @@ kbd {
   font-size: 0.9rem;
 }
 
-#review-meta a {
+#review-meta p a {
   color: var(--color-accent);
   word-break: break-all;
 }

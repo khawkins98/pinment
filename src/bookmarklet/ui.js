@@ -1474,9 +1474,16 @@ export function createWelcomeModal(validateUrl, validateImport) {
       }
     });
 
-    // Focus the start button by default; switch to input if clipboard has a share URL
-    setTimeout(() => {
-      freshBtn.focus();
+    // Focus the start button by default
+    setTimeout(() => freshBtn.focus(), 0);
+
+    // Pre-fill from clipboard when the URL input is focused (deferred to
+    // avoid a browser clipboard-permission prompt that can steal the first
+    // click away from the "Start annotating" button).
+    let clipboardChecked = false;
+    input.addEventListener('focus', () => {
+      if (clipboardChecked) return;
+      clipboardChecked = true;
       if (navigator.clipboard && navigator.clipboard.readText) {
         navigator.clipboard.readText().then((clipText) => {
           const trimmed = (clipText || '').trim();
@@ -1488,13 +1495,12 @@ export function createWelcomeModal(validateUrl, validateImport) {
             hint.className = 'pinment-modal-clipboard-hint';
             hint.textContent = 'Pre-filled from clipboard';
             inputRow.parentNode.insertBefore(hint, errorEl);
-            input.focus();
           }
         }).catch(() => {
           // Clipboard access denied — no problem, user can paste manually
         });
       }
-    }, 0);
+    });
   });
 
   return { modal: backdrop, promise };
