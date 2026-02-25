@@ -692,6 +692,26 @@ footer em {
   justify-content: flex-end;
 }
 
+/* ---- Mobile notice ---- */
+
+.mobile-notice {
+  display: none;
+  padding: 1rem 1.25rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #1e40af;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .mobile-notice {
+    display: block;
+  }
+}
+
 /* ---- Responsive ---- */
 
 @media (max-width: 480px) {
