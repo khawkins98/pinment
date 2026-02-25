@@ -112,6 +112,9 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     // Warn before navigating away with unsaved pins
     window.addEventListener('beforeunload', onBeforeUnload);
 
+    // Enable keyboard shortcuts
+    document.addEventListener('keydown', onKeyDown);
+
     // Build panel and enable pin mode after modal resolves
     renderPanel();
     enablePinMode();
@@ -121,6 +124,49 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     if (state.pins.length > 0) {
       e.preventDefault();
       e.returnValue = '';
+    }
+  }
+
+  let activePinIndex = -1;
+
+  function onKeyDown(e) {
+    // Skip when typing in inputs or when a modal is open
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (document.querySelector('.pinment-modal-backdrop')) return;
+    if (panelMinimized) return;
+
+    if (e.key === 'Escape' && state.editMode) {
+      e.preventDefault();
+      handleEditModeToggle();
+      return;
+    }
+
+    if ((e.key === 'n' || e.key === 'N') && !state.editMode) {
+      e.preventDefault();
+      handleEditModeToggle();
+      return;
+    }
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      const panel = document.getElementById(PANEL_ID);
+      if (!panel) return;
+      const visibleIds = panel._visiblePinIds;
+      if (!visibleIds || visibleIds.size === 0) return;
+      const ids = Array.from(visibleIds).sort((a, b) => a - b);
+
+      e.preventDefault();
+      if (e.key === 'ArrowDown') {
+        activePinIndex = activePinIndex < ids.length - 1 ? activePinIndex + 1 : 0;
+      } else {
+        activePinIndex = activePinIndex > 0 ? activePinIndex - 1 : ids.length - 1;
+      }
+
+      const pinId = ids[activePinIndex];
+      scrollToComment(pinId);
+      clearPinHighlight();
+      const pin = state.pins.find((p) => p.id === pinId);
+      if (pin) highlightPinTarget(pin);
     }
   }
 
@@ -570,6 +616,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   }
 
   function deactivate() {
+    document.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('beforeunload', onBeforeUnload);
     window.removeEventListener('resize', onResize);
     if (resizeRafId) cancelAnimationFrame(resizeRafId);

@@ -951,7 +951,7 @@ export function createPanel(pins, options = {}) {
 
     const toggleBtn = document.createElement('button');
     toggleBtn.className = 'pinment-mode-toggle';
-    toggleBtn.textContent = editMode ? 'Browse' : 'Add pins';
+    toggleBtn.textContent = editMode ? 'Browse (Esc)' : 'Add pins (N)';
     if (onEditModeToggle) toggleBtn.addEventListener('click', onEditModeToggle);
     modeBar.appendChild(toggleBtn);
 
