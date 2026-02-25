@@ -6,6 +6,7 @@
  * pinment- namespace to avoid conflicts with host pages.
  */
 import { generateSelector } from '../selector.js';
+import { VERSION, RELEASE_DATE } from '../version.js';
 
 export function buildStyles() {
   return `
@@ -139,6 +140,13 @@ export function buildStyles() {
   padding: 12px 16px;
   border-top: 1px solid #e2e8f0;
   flex-shrink: 0;
+}
+.pinment-version {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  color: #a0aec0;
+  margin-top: 2px;
 }
 .pinment-btn {
   padding: 6px 14px;
@@ -681,6 +689,39 @@ export function buildStyles() {
   font-size: 12px;
   padding: 6px 10px;
 }
+.pinment-filter-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f7fafc;
+  flex-shrink: 0;
+}
+.pinment-filter-select {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 11px;
+  background: #fff;
+  color: #2d3748;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.pinment-filter-select:focus {
+  outline: none;
+  border-color: #3182ce;
+}
+.pinment-filter-count {
+  padding: 6px 16px;
+  font-size: 12px;
+  color: #718096;
+  background: #fffff0;
+  border-bottom: 1px solid #fefcbf;
+}
 `;
 }
 
@@ -777,7 +818,7 @@ export function createPinElement(pin) {
 }
 
 export function createPanel(pins, options = {}) {
-  const { editable = false, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport, onReply, onImport } = options;
+  const { editable = false, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport, onReply, onImport, filters = null, onFilterChange = null } = options;
 
   const panel = document.createElement('div');
   panel.className = 'pinment-panel';
@@ -816,11 +857,27 @@ export function createPanel(pins, options = {}) {
     panel.appendChild(hint);
   }
 
+  // Filter toolbar
+  if (filters && pins.length > 0) {
+    const toolbar = createFilterToolbar(pins, filters, onFilterChange);
+    panel.appendChild(toolbar);
+  }
+
+  // Determine visible pins
+  const visiblePins = filters ? filterAndSortPins(pins, filters) : pins;
+
   // Comment list
   const body = document.createElement('div');
   body.className = 'pinment-panel-body';
 
-  for (const pin of pins) {
+  if (filters && visiblePins.length !== pins.length) {
+    const countEl = document.createElement('div');
+    countEl.className = 'pinment-filter-count';
+    countEl.textContent = `Showing ${visiblePins.length} of ${pins.length} pins`;
+    body.appendChild(countEl);
+  }
+
+  for (const pin of visiblePins) {
     const comment = createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, onResolveToggle, onReply });
     body.appendChild(comment);
   }
@@ -858,8 +915,14 @@ export function createPanel(pins, options = {}) {
   if (onToggle) toggleBtn.addEventListener('click', onToggle);
   footer.appendChild(toggleBtn);
 
+  const versionEl = document.createElement('div');
+  versionEl.className = 'pinment-version';
+  versionEl.textContent = `v${VERSION} · ${RELEASE_DATE}`;
+  footer.appendChild(versionEl);
+
   panel.appendChild(footer);
 
+  panel._visiblePinIds = new Set(visiblePins.map(p => p.id));
   return panel;
 }
 
@@ -869,6 +932,118 @@ const CATEGORY_LABELS = {
   missing: 'Missing content',
   question: 'Question',
 };
+
+/**
+ * Filters and sorts pins based on the given filter criteria.
+ *
+ * @param {Array} pins - Full array of pin objects
+ * @param {{ category: string, status: string, author: string, sort: string }} filters
+ * @returns {Array} Filtered and sorted copy of pins
+ */
+export function filterAndSortPins(pins, filters) {
+  let result = pins.filter(pin => {
+    if (filters.category !== 'all') {
+      if (filters.category === 'none') {
+        if (pin.c) return false;
+      } else if (pin.c !== filters.category) {
+        return false;
+      }
+    }
+    if (filters.status === 'open' && pin.resolved) return false;
+    if (filters.status === 'resolved' && !pin.resolved) return false;
+    if (filters.author !== 'all' && (pin.author || '') !== filters.author) return false;
+    return true;
+  });
+
+  const CATEGORY_ORDER = { text: 0, layout: 1, missing: 2, question: 3 };
+  if (filters.sort === 'category') {
+    result = [...result].sort((a, b) => {
+      const ca = a.c ? (CATEGORY_ORDER[a.c] ?? 99) : 99;
+      const cb = b.c ? (CATEGORY_ORDER[b.c] ?? 99) : 99;
+      return ca - cb || a.id - b.id;
+    });
+  } else if (filters.sort === 'status') {
+    result = [...result].sort((a, b) => {
+      const sa = a.resolved ? 1 : 0;
+      const sb = b.resolved ? 1 : 0;
+      return sa - sb || a.id - b.id;
+    });
+  }
+
+  return result;
+}
+
+function createFilterToolbar(pins, filters, onChange) {
+  const toolbar = document.createElement('div');
+  toolbar.className = 'pinment-filter-toolbar';
+
+  const catSelect = document.createElement('select');
+  catSelect.className = 'pinment-filter-select';
+  catSelect.title = 'Filter by category';
+  for (const [value, label] of [['all', 'All categories'], ...Object.entries(CATEGORY_LABELS), ['none', 'Uncategorized']]) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = label;
+    if (filters.category === value) opt.selected = true;
+    catSelect.appendChild(opt);
+  }
+  catSelect.addEventListener('change', () => {
+    onChange({ ...filters, category: catSelect.value });
+  });
+  toolbar.appendChild(catSelect);
+
+  const statusSelect = document.createElement('select');
+  statusSelect.className = 'pinment-filter-select';
+  statusSelect.title = 'Filter by status';
+  for (const [value, label] of [['all', 'All statuses'], ['open', 'Open'], ['resolved', 'Resolved']]) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = label;
+    if (filters.status === value) opt.selected = true;
+    statusSelect.appendChild(opt);
+  }
+  statusSelect.addEventListener('change', () => {
+    onChange({ ...filters, status: statusSelect.value });
+  });
+  toolbar.appendChild(statusSelect);
+
+  const authors = [...new Set(pins.map(p => p.author || '').filter(Boolean))].sort();
+  const authorSelect = document.createElement('select');
+  authorSelect.className = 'pinment-filter-select';
+  authorSelect.title = 'Filter by author';
+  const allAuthorsOpt = document.createElement('option');
+  allAuthorsOpt.value = 'all';
+  allAuthorsOpt.textContent = 'All authors';
+  authorSelect.appendChild(allAuthorsOpt);
+  for (const name of authors) {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    if (filters.author === name) opt.selected = true;
+    authorSelect.appendChild(opt);
+  }
+  authorSelect.addEventListener('change', () => {
+    onChange({ ...filters, author: authorSelect.value });
+  });
+  toolbar.appendChild(authorSelect);
+
+  const sortSelect = document.createElement('select');
+  sortSelect.className = 'pinment-filter-select';
+  sortSelect.title = 'Sort by';
+  for (const [value, label] of [['id', 'Sort: Pin #'], ['category', 'Sort: Category'], ['status', 'Sort: Status']]) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = label;
+    if (filters.sort === value) opt.selected = true;
+    sortSelect.appendChild(opt);
+  }
+  sortSelect.addEventListener('change', () => {
+    onChange({ ...filters, sort: sortSelect.value });
+  });
+  toolbar.appendChild(sortSelect);
+
+  return toolbar;
+}
 
 function renderReplies(replies) {
   const container = document.createElement('div');

@@ -22,6 +22,9 @@ The URL *is* the review. Recipients open it, visit the page, click the bookmarkl
 | Drag to reposition | Move pins after placing them -- no delete and re-create |
 | Thread replies | Reply to any pin to create a conversation thread |
 | Categories & status | Label pins (text, layout, missing, question) and mark as resolved |
+| Dynamic loading | Bookmarklet is a tiny loader (~200 chars) that fetches the full script from the host site, staying well under browser URL limits |
+| Version display | Panel footer shows current version and release date |
+| Filter & sort | Filter pins by category, status, or author; sort by pin number, category, or status |
 | Works anywhere | Bookmarklet runs on any page you can visit |
 
 ## Quick start
@@ -38,6 +41,7 @@ npm run build      # production build (vite + esbuild bookmarklet)
 ```
 src/state.js                  State schema v2, serialization, compression, import/export
 src/selector.js               CSS selector generation, environment detection
+src/version.js                Version and release date constants
 src/bookmarklet/index.js      Bookmarklet entry point (IIFE)
 src/bookmarklet/ui.js         Pin elements, comment panel, modals, styles
 js/app.js                     Hub site logic (viewer, import)
@@ -45,7 +49,7 @@ css/style.css                 Hub site styles
 index.html                    Landing page and annotation viewer
 tests/                        Vitest + jsdom tests
 scripts/build-bookmarklet.js  Standalone bookmarklet build (esbuild)
-vite.config.js                Vite config with bookmarklet injection plugin
+vite.config.js                Vite config with bookmarklet build plugin
 .github/workflows/ci.yml      CI/CD: test, build, deploy to GitHub Pages
 ```
 
@@ -82,6 +86,7 @@ Pins anchor to DOM elements via CSS selectors (`s`) with offset ratios (`ox`/`oy
 | Decision | Choice | Rationale |
 |---|---|---|
 | Bookmarklet vs. extension | Bookmarklet | No install process, works cross-browser, no store approval |
+| Inline vs. dynamic loading | Dynamic `<script>` loader | Inline `javascript:` URI hit Firefox's ~65KB bookmark limit; a tiny loader fetches the full script from the host site, enabling instant updates without re-installing |
 | Live page vs. screenshot | Live page | Pins bind to real DOM elements; no CORS issues with screenshots |
 | URL hash vs. backend | URL hash (lz-string) | Zero infrastructure; shareable via any channel |
 | Element selectors vs. pixel coords | Element selectors + pixel fallback | Resilient to viewport changes; fallback if DOM changes |

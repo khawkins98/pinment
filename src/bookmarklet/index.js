@@ -27,6 +27,12 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     pinsVisible: true,
     viewportWidth: window.innerWidth,
     env: detectEnv(),
+    filters: {
+      category: 'all',
+      status: 'all',
+      author: 'all',
+      sort: 'id',
+    },
   };
 
   let panelMinimized = false;
@@ -233,6 +239,8 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       onExport: handleExport,
       onReply: handleReply,
       onImport: handleImport,
+      filters: state.filters,
+      onFilterChange: handleFilterChange,
     });
     panel.id = PANEL_ID;
 
@@ -240,6 +248,9 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     updateCapacity(panel);
 
     document.body.appendChild(panel);
+
+    // Sync on-page pin marker visibility with filter state
+    syncPinVisibility(panel._visiblePinIds);
 
     // Re-enable pin mode overlay if not present
     if (!document.getElementById(OVERLAY_ID)) {
@@ -352,6 +363,20 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   function handleToggle() {
     state.pinsVisible = !state.pinsVisible;
     pinContainer.style.display = state.pinsVisible ? '' : 'none';
+  }
+
+  function handleFilterChange(newFilters) {
+    state.filters = newFilters;
+    renderPanel();
+  }
+
+  function syncPinVisibility(visibleIds) {
+    if (!visibleIds) return;
+    const allPinEls = pinContainer.querySelectorAll('[data-pinment-id]');
+    for (const el of allPinEls) {
+      const id = parseInt(el.dataset.pinmentId, 10);
+      el.style.display = visibleIds.has(id) ? '' : 'none';
+    }
   }
 
   function buildStateData() {

@@ -22,9 +22,6 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Build bookmarklet
-        run: npm run build:bookmarklet
-
       - name: Build site
         run: npm run build
 

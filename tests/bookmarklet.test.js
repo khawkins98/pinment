@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createPinElement, createPanel, calculatePinPosition, restorePins, buildStyles, createWelcomeModal, createDocsSiteModal, createMinimizedButton, createExitConfirmModal } from '../src/bookmarklet/ui.js';
+import { createPinElement, createPanel, calculatePinPosition, restorePins, buildStyles, createWelcomeModal, createDocsSiteModal, createMinimizedButton, createExitConfirmModal, filterAndSortPins } from '../src/bookmarklet/ui.js';
 import { createState } from '../src/state.js';
 
 beforeEach(() => {
@@ -418,6 +418,13 @@ describe('createPanel', () => {
     expect(onImport).toHaveBeenCalledOnce();
   });
 
+  it('renders version info in footer', () => {
+    const panel = createPanel([]);
+    const version = panel.querySelector('.pinment-version');
+    expect(version).not.toBeNull();
+    expect(version.textContent).toMatch(/^v\d+\.\d+\.\d+ · \d{4}-\d{2}-\d{2}$/);
+  });
+
   it('renders reply button in editable mode', () => {
     const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '' }];
     const panel = createPanel(pins, { editable: true });
@@ -818,5 +825,150 @@ describe('createExitConfirmModal', () => {
     });
     const notice = modal.querySelector('.pinment-modal-notice');
     expect(notice.textContent).toContain('not saved');
+  });
+});
+
+describe('filterAndSortPins', () => {
+  const ALL_FILTERS = { category: 'all', status: 'all', author: 'all', sort: 'id' };
+  const pins = [
+    { id: 1, author: 'FL', text: 'a', c: 'text' },
+    { id: 2, author: 'KH', text: 'b', c: 'layout', resolved: true },
+    { id: 3, author: 'FL', text: 'c', c: 'question' },
+    { id: 4, author: 'KH', text: 'd' },
+    { id: 5, author: '', text: 'e', c: 'missing', resolved: true },
+  ];
+
+  it('returns all pins when all filters are "all" and sort is "id"', () => {
+    const result = filterAndSortPins(pins, ALL_FILTERS);
+    expect(result.map(p => p.id)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('filters by category "text"', () => {
+    const result = filterAndSortPins(pins, { ...ALL_FILTERS, category: 'text' });
+    expect(result.map(p => p.id)).toEqual([1]);
+  });
+
+  it('filters by category "none" for uncategorized pins', () => {
+    const result = filterAndSortPins(pins, { ...ALL_FILTERS, category: 'none' });
+    expect(result.map(p => p.id)).toEqual([4]);
+  });
+
+  it('filters by status "open"', () => {
+    const result = filterAndSortPins(pins, { ...ALL_FILTERS, status: 'open' });
+    expect(result.map(p => p.id)).toEqual([1, 3, 4]);
+  });
+
+  it('filters by status "resolved"', () => {
+    const result = filterAndSortPins(pins, { ...ALL_FILTERS, status: 'resolved' });
+    expect(result.map(p => p.id)).toEqual([2, 5]);
+  });
+
+  it('filters by author', () => {
+    const result = filterAndSortPins(pins, { ...ALL_FILTERS, author: 'KH' });
+    expect(result.map(p => p.id)).toEqual([2, 4]);
+  });
+
+  it('combines category and status filters', () => {
+    const result = filterAndSortPins(pins, { ...ALL_FILTERS, category: 'layout', status: 'resolved' });
+    expect(result.map(p => p.id)).toEqual([2]);
+  });
+
+  it('combines category and author filters', () => {
+    const result = filterAndSortPins(pins, { ...ALL_FILTERS, category: 'question', author: 'FL' });
+    expect(result.map(p => p.id)).toEqual([3]);
+  });
+
+  it('sorts by category', () => {
+    const result = filterAndSortPins(pins, { ...ALL_FILTERS, sort: 'category' });
+    expect(result.map(p => p.id)).toEqual([1, 2, 5, 3, 4]);
+  });
+
+  it('sorts by status (open first, then resolved)', () => {
+    const result = filterAndSortPins(pins, { ...ALL_FILTERS, sort: 'status' });
+    expect(result.map(p => p.id)).toEqual([1, 3, 4, 2, 5]);
+  });
+
+  it('returns empty array when no pins match', () => {
+    const result = filterAndSortPins(pins, { ...ALL_FILTERS, category: 'text', status: 'resolved' });
+    expect(result).toEqual([]);
+  });
+
+  it('does not mutate the original array', () => {
+    const copy = [...pins];
+    filterAndSortPins(pins, { ...ALL_FILTERS, sort: 'category' });
+    expect(pins).toEqual(copy);
+  });
+});
+
+describe('createPanel with filters', () => {
+  const filters = { category: 'all', status: 'all', author: 'all', sort: 'id' };
+  const pins = [
+    { id: 1, author: 'FL', text: 'a', c: 'text' },
+    { id: 2, author: 'KH', text: 'b', c: 'layout', resolved: true },
+    { id: 3, author: 'FL', text: 'c' },
+  ];
+
+  it('renders filter toolbar when filters are provided and pins exist', () => {
+    const panel = createPanel(pins, { filters });
+    expect(panel.querySelector('.pinment-filter-toolbar')).not.toBeNull();
+    expect(panel.querySelectorAll('.pinment-filter-select').length).toBe(4);
+  });
+
+  it('does not render filter toolbar when filters is null', () => {
+    const panel = createPanel(pins);
+    expect(panel.querySelector('.pinment-filter-toolbar')).toBeNull();
+  });
+
+  it('does not render filter toolbar when no pins exist', () => {
+    const panel = createPanel([], { filters });
+    expect(panel.querySelector('.pinment-filter-toolbar')).toBeNull();
+  });
+
+  it('renders only matching comment items when category filter is active', () => {
+    const panel = createPanel(pins, { filters: { ...filters, category: 'text' } });
+    const items = panel.querySelectorAll('.pinment-comment');
+    expect(items.length).toBe(1);
+    expect(items[0].dataset.pinmentId).toBe('1');
+  });
+
+  it('renders filter count when filtering reduces visible pins', () => {
+    const panel = createPanel(pins, { filters: { ...filters, status: 'resolved' } });
+    const count = panel.querySelector('.pinment-filter-count');
+    expect(count).not.toBeNull();
+    expect(count.textContent).toContain('1 of 3');
+  });
+
+  it('does not render filter count when all pins are shown', () => {
+    const panel = createPanel(pins, { filters });
+    expect(panel.querySelector('.pinment-filter-count')).toBeNull();
+  });
+
+  it('invokes onFilterChange with updated filters when a select changes', () => {
+    const onFilterChange = vi.fn();
+    const panel = createPanel(pins, { filters, onFilterChange });
+    const selects = panel.querySelectorAll('.pinment-filter-select');
+    // Change the status select (second one)
+    selects[1].value = 'resolved';
+    selects[1].dispatchEvent(new Event('change'));
+    expect(onFilterChange).toHaveBeenCalledWith({ ...filters, status: 'resolved' });
+  });
+
+  it('author dropdown contains unique authors from all pins', () => {
+    const panel = createPanel(pins, { filters });
+    const authorSelect = panel.querySelectorAll('.pinment-filter-select')[2];
+    const options = Array.from(authorSelect.options).map(o => o.value);
+    expect(options).toEqual(['all', 'FL', 'KH']);
+  });
+
+  it('attaches _visiblePinIds with correct filtered ids', () => {
+    const panel = createPanel(pins, { filters: { ...filters, category: 'layout' } });
+    expect(panel._visiblePinIds).toBeInstanceOf(Set);
+    expect([...panel._visiblePinIds]).toEqual([2]);
+  });
+
+  it('attaches _visiblePinIds with all ids when no filters', () => {
+    const panel = createPanel(pins);
+    expect(panel._visiblePinIds).toBeInstanceOf(Set);
+    expect([...panel._visiblePinIds]).toEqual([1, 2, 3]);
   });
 });
