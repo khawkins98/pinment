@@ -24,14 +24,17 @@ async function buildBookmarklet() {
 
   const code = result.outputFiles[0].text.trim();
 
-  // The bookmarklet source already wraps itself in an IIFE, so just encode it
-  const uri = `javascript:void%20${encodeURIComponent(code)}`;
-
   mkdirSync(path.resolve(ROOT, 'dist'), { recursive: true });
-  writeFileSync(path.resolve(ROOT, 'dist/bookmarklet.txt'), uri);
 
-  const sizeKB = (new TextEncoder().encode(uri).length / 1024).toFixed(1);
-  console.log(`Bookmarklet built: dist/bookmarklet.txt (${sizeKB} KB)`);
+  // Write the full bundle as a standalone JS file (loaded dynamically)
+  writeFileSync(path.resolve(ROOT, 'dist/pinment-bookmarklet.js'), code);
+  const bundleSizeKB = (new TextEncoder().encode(code).length / 1024).toFixed(1);
+  console.log(`Bookmarklet bundle: dist/pinment-bookmarklet.js (${bundleSizeKB} KB)`);
+
+  // Write a loader template (the host site's app.js fills in the real URL)
+  const loaderTemplate = `javascript:void (function(){var s=document.createElement('script');s.src='YOUR_BASE_URL/pinment-bookmarklet.js?v='+Date.now();document.head.appendChild(s)})()`;
+  writeFileSync(path.resolve(ROOT, 'dist/bookmarklet-loader.txt'), loaderTemplate);
+  console.log(`Loader template: dist/bookmarklet-loader.txt (${loaderTemplate.length} chars)`);
 }
 
 buildBookmarklet().catch((err) => {

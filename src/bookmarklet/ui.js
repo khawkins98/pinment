@@ -6,6 +6,7 @@
  * pinment- namespace to avoid conflicts with host pages.
  */
 import { generateSelector } from '../selector.js';
+import { VERSION, RELEASE_DATE } from '../version.js';
 
 export function buildStyles() {
   return `
@@ -139,6 +140,13 @@ export function buildStyles() {
   padding: 12px 16px;
   border-top: 1px solid #e2e8f0;
   flex-shrink: 0;
+}
+.pinment-version {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  color: #a0aec0;
+  margin-top: 2px;
 }
 .pinment-btn {
   padding: 6px 14px;
@@ -857,6 +865,11 @@ export function createPanel(pins, options = {}) {
   toggleBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2.5"/></svg>';
   if (onToggle) toggleBtn.addEventListener('click', onToggle);
   footer.appendChild(toggleBtn);
+
+  const versionEl = document.createElement('div');
+  versionEl.className = 'pinment-version';
+  versionEl.textContent = `v${VERSION} · ${RELEASE_DATE}`;
+  footer.appendChild(versionEl);
 
   panel.appendChild(footer);
 

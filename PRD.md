@@ -26,13 +26,14 @@ Pinment is a client-side bookmarklet that injects an annotation UI onto any live
 | Compression | lz-string | Browser-compatible, good compression for JSON text, URL-safe encoding |
 | Hosting | GitHub Pages | Free, no server to maintain, auto-deploys via GitHub Actions |
 | CSS isolation | Namespaced classes (`pinment-*`) | Simpler event handling than shadow DOM; sufficient for bookmarklet use |
+| Bookmarklet delivery | Dynamic `<script>` loader | Inline `javascript:` URI exceeded Firefox's ~65KB bookmark limit; loader is ~200 chars and fetches the full script from the host site |
 | Auth | None | Simplicity; feedback links are obscure URLs (acceptable for non-sensitive content review) |
 
 ## Functional requirements
 
 ### Implemented
 
-- **FR-01** Bookmarklet injection: inject annotation UI onto any page via `javascript:` URI
+- **FR-01** Bookmarklet injection: inject annotation UI onto any page via a dynamically loaded script
 - **FR-02** Pin placement: click on the page to place a numbered marker anchored to a DOM element
 - **FR-03** Comment entry: each pin has an editable text comment and an optional author name
 - **FR-04** Comment panel: fixed sidebar listing all comments by pin number
@@ -53,14 +54,16 @@ Pinment is a client-side bookmarklet that injects an annotation UI onto any live
 - **FR-19** Panel minimize/restore: collapse panel to a floating pill button
 - **FR-20** URL capacity indicator: visual bar showing how close annotations are to the ~8KB limit
 - **FR-21** Author persistence: author name saved to localStorage across sessions
+- **FR-22** Dynamic bookmarklet loading: tiny `javascript:` loader (~200 chars) fetches the full script from the host site, removing browser bookmark URL size limits and enabling instant updates without re-installing
+- **FR-23** Version display: panel footer shows current version and release date
 
 ### Future
 
-- **FR-22** Browser extension: bypass CSP restrictions, enable richer UX
-- **FR-23** GitHub Issues export: export pins directly as GitHub issues
-- **FR-24** Multi-reviewer comparison: merge/diff annotations from multiple share URLs
-- **FR-25** Keyboard shortcuts: Esc to cancel pin mode, N for new pin, arrows to navigate
-- **FR-26** Filter/sort pins: by category, status, or author
+- **FR-24** Browser extension: bypass CSP restrictions, enable richer UX
+- **FR-25** GitHub Issues export: export pins directly as GitHub issues
+- **FR-26** Multi-reviewer comparison: merge/diff annotations from multiple share URLs
+- **FR-27** Keyboard shortcuts: Esc to cancel pin mode, N for new pin, arrows to navigate
+- **FR-28** Filter/sort pins: by category, status, or author
 
 ## Non-functional requirements
 

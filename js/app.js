@@ -233,6 +233,17 @@ export function renderError(message) {
 }
 
 export function init() {
+  // Set the bookmarklet link to a tiny loader that dynamically loads
+  // the full script from this site. This keeps the bookmark URL under
+  // browser limits (~65 KB in Firefox) regardless of how large the
+  // bookmarklet bundle grows.
+  const bookmarkletLink = document.getElementById('bookmarklet');
+  if (bookmarkletLink) {
+    const scriptUrl = window.location.origin + import.meta.env.BASE_URL + 'pinment-bookmarklet.js';
+    const loader = `(function(){var s=document.createElement('script');s.src='${scriptUrl}?v='+Date.now();document.head.appendChild(s)})()`;
+    bookmarkletLink.href = 'javascript:void ' + encodeURIComponent(loader);
+  }
+
   const hash = window.location.hash;
   if (hash && hash.startsWith('#data=')) {
     const state = parseHashData(hash);

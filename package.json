@@ -1,6 +1,6 @@
 {
   "name": "pinment",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Pin comments to a live webpage. Share the annotations as a single URL. No backend, no accounts, no database.",
   "type": "module",
   "scripts": {
