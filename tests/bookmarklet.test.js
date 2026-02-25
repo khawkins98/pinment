@@ -876,6 +876,15 @@ describe('createMobileWarningModal', () => {
     await promise;
     expect(document.querySelector('.pinment-modal-backdrop')).toBeNull();
   });
+
+  it('resolves with false when Escape key is pressed', async () => {
+    const { modal, promise } = createMobileWarningModal();
+    document.body.appendChild(modal);
+    const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+    modal.dispatchEvent(escapeEvent);
+    const result = await promise;
+    expect(result).toBe(false);
+  });
 });
 
 describe('createWelcomeModal import', () => {
