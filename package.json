@@ -1,0 +1,28 @@
+{
+  "name": "pinment",
+  "version": "1.0.0",
+  "description": "Pin comments to a screenshot. Share the annotated view as a single URL. No backend, no accounts, no database.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khawkins98/pinment.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/khawkins98/pinment/issues"
+  },
+  "homepage": "https://github.com/khawkins98/pinment#readme",
+  "devDependencies": {
+    "vite": "^7.3.1"
+  },
+  "dependencies": {
+    "lz-string": "^1.5.0"
+  }
+}

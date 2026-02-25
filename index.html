@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pinment — Pin comments to any webpage</title>
+  <meta name="description" content="Pin comments to a live webpage and share the annotations as a single URL. No backend, no accounts, no database.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1 class="logo">Pinment</h1>
+      <p class="tagline">Pin comments to any webpage. Share via URL.</p>
+    </header>
+
+    <main>
+      <!-- Bookmarklet install -->
+      <section id="install">
+        <h2>Get the bookmarklet</h2>
+        <p>Drag this button to your bookmarks bar:</p>
+        <a id="bookmarklet" class="bookmarklet-btn" href="javascript:void(0);">Pinment</a>
+        <p class="hint">Then click it on any page you want to annotate.</p>
+      </section>
+
+      <!-- Shared annotation viewer -->
+      <section id="viewer" hidden>
+        <h2>Annotation review</h2>
+        <div id="review-meta"></div>
+        <div id="review-pins" role="list"></div>
+        <p class="hint">To see these pins on the page, visit the link above and click the Pinment bookmarklet.</p>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Inspired by the URL-as-state pattern from
+        <a href="https://alfy.blog/2025/10/31/your-url-is-your-state.html" target="_blank" rel="noopener">Ahmad El-Alfy</a> and
+        <a href="https://allaboutken.com/posts/20251226-url-state-management/" target="_blank" rel="noopener">Ken</a>.
+        Built on ideas from
+        <a href="https://github.com/AlexW00/Buffertab" target="_blank" rel="noopener">Buffertab</a> and
+        <a href="https://github.com/taqui-786/inkash" target="_blank" rel="noopener">Inkash</a>.
+      </p>
+    </footer>
+  </div>
+
+  <script src="js/app.js" type="module"></script>
+</body>
+</html>
