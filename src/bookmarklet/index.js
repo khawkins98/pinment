@@ -25,6 +25,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     pins: [],
     nextId: 1,
     pinsVisible: true,
+    editMode: true,
     viewportWidth: window.innerWidth,
     env: detectEnv(),
     filters: {
@@ -108,10 +109,20 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       loadState(loaded);
     }
 
+    // Warn before navigating away with unsaved pins
+    window.addEventListener('beforeunload', onBeforeUnload);
+
     // Build panel and enable pin mode after modal resolves
     renderPanel();
     enablePinMode();
   });
+
+  function onBeforeUnload(e) {
+    if (state.pins.length > 0) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  }
 
   function loadState(loaded) {
     for (const pin of loaded.pins) {
@@ -229,6 +240,8 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
 
     const panel = createPanel(state.pins, {
       editable: true,
+      editMode: state.editMode,
+      onEditModeToggle: handleEditModeToggle,
       onShare: handleShare,
       onToggle: handleToggle,
       onMinimize: minimizePanel,
@@ -255,8 +268,8 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     // Sync on-page pin marker visibility with filter state
     syncPinVisibility(panel._visiblePinIds);
 
-    // Re-enable pin mode overlay if not present
-    if (!document.getElementById(OVERLAY_ID)) {
+    // Re-enable pin mode overlay if in edit mode
+    if (state.editMode && !document.getElementById(OVERLAY_ID)) {
       enablePinMode();
     }
   }
@@ -379,6 +392,17 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
 
   function handleFilterChange(newFilters) {
     state.filters = newFilters;
+    renderPanel();
+  }
+
+  function handleEditModeToggle() {
+    state.editMode = !state.editMode;
+    const overlay = document.getElementById(OVERLAY_ID);
+    if (state.editMode) {
+      if (!overlay) enablePinMode();
+    } else {
+      if (overlay) overlay.remove();
+    }
     renderPanel();
   }
 
@@ -520,7 +544,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     if (btn) btn.remove();
     const panel = document.getElementById(PANEL_ID);
     if (panel) panel.style.display = '';
-    if (!document.getElementById(OVERLAY_ID)) {
+    if (state.editMode && !document.getElementById(OVERLAY_ID)) {
       enablePinMode();
     }
   }
@@ -546,6 +570,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   }
 
   function deactivate() {
+    window.removeEventListener('beforeunload', onBeforeUnload);
     window.removeEventListener('resize', onResize);
     if (resizeRafId) cancelAnimationFrame(resizeRafId);
     clearPinHighlight();

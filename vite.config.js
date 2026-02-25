@@ -10,9 +10,14 @@ import path from 'path';
  */
 function bookmarkletPlugin() {
   let bookmarkletCode = '';
+  let isDev = false;
 
   return {
     name: 'pinment-bookmarklet',
+
+    configResolved(config) {
+      isDev = config.command === 'serve';
+    },
 
     async buildStart() {
       const result = await esbuild({
@@ -22,6 +27,7 @@ function bookmarkletPlugin() {
         format: 'iife',
         write: false,
         target: ['es2020'],
+        define: { '__PINMENT_DEV__': JSON.stringify(isDev) },
       });
       bookmarkletCode = result.outputFiles[0].text.trim();
     },

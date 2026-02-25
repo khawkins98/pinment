@@ -249,6 +249,9 @@ export function init() {
     const scriptUrl = window.location.origin + import.meta.env.BASE_URL + 'pinment-bookmarklet.js';
     const loader = `(function(){var s=document.createElement('script');s.src='${scriptUrl}?v='+Date.now();s.onerror=function(){alert('Pinment failed to load. The page may block external scripts.')};document.head.appendChild(s)})()`;
     bookmarkletLink.href = 'javascript:void ' + encodeURIComponent(loader);
+    if (import.meta.env.DEV) {
+      bookmarkletLink.textContent = 'Pinment (Dev)';
+    }
   }
 
   const hash = window.location.hash;
