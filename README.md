@@ -28,6 +28,7 @@ The URL *is* the review. Recipients open it, visit the page, click the bookmarkl
 | Dynamic loading | Bookmarklet is a tiny loader (~200 chars) that fetches the full script from the host site, staying well under browser URL limits |
 | Version display | Panel footer shows current version and release date |
 | Filter & sort | Filter pins by category, status, or author; sort by pin number, category, or status |
+| Mobile warning | Warns mobile users that Pinment is desktop-optimized; option to continue anyway |
 | Works anywhere | Bookmarklet runs on any page you can visit |
 
 ## Quick start
@@ -100,6 +101,7 @@ Pins anchor to DOM elements via CSS selectors (`s`) with offset ratios (`ox`/`oy
 - **URL size**: ~8KB practical limit supports roughly 50 annotations depending on comment length
 - **CSP**: Pages with strict Content Security Policy may block the bookmarklet
 - **DOM changes**: If the page DOM changes significantly, selectors may not resolve (falls back to pixel coordinates with a warning badge)
+- **Mobile devices**: Bookmarklet runs on mobile but is optimized for desktop; a warning modal informs users of this limitation
 - **No real-time collaboration**: Users share URLs sequentially via chat/email
 
 ## Background & inspiration

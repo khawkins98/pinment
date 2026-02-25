@@ -5,7 +5,7 @@
  * allows pin placement, and provides share/restore functionality.
  * All DOM elements use the pinment- class namespace to avoid conflicts.
  */
-import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal, createMinimizedButton, createExitConfirmModal, repositionPin, highlightPinTarget, clearPinHighlight } from './ui.js';
+import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal, createMobileWarningModal, createMinimizedButton, createExitConfirmModal, repositionPin, highlightPinTarget, clearPinHighlight } from './ui.js';
 import { compress, decompress, parseShareUrl, validateState, createShareUrl, estimateUrlSize, exportStateAsJson, importStateFromJson, SCHEMA_VERSION, MAX_URL_BYTES } from '../state.js';
 import { detectEnv } from '../selector.js';
 const STORAGE_KEY_AUTHOR = 'pinment-author';
@@ -14,7 +14,7 @@ const STYLE_ID = 'pinment-styles';
 const OVERLAY_ID = 'pinment-overlay';
 const PIN_CONTAINER_ID = 'pinment-pin-container';
 
-(function pinment() {
+(async function pinment() {
   // Toggle off if already active
   if (document.getElementById(PANEL_ID)) {
     deactivate();
@@ -51,6 +51,17 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     document.body.appendChild(modal);
     promise.then(() => deactivate());
     return;
+  }
+
+  // Warn on mobile devices
+  if (state.env.dt === 'm') {
+    const { modal: mobileModal, promise: mobilePromise } = createMobileWarningModal();
+    document.body.appendChild(mobileModal);
+    const proceed = await mobilePromise;
+    if (!proceed) {
+      styleEl.remove();
+      return;
+    }
   }
 
   // Create pin container (covers entire document for absolute positioning)

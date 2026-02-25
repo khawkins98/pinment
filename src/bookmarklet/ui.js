@@ -1698,6 +1698,95 @@ export function createDocsSiteModal() {
 }
 
 /**
+ * Creates a modal warning that Pinment is designed for desktop browsers.
+ * Shown when the bookmarklet is activated on a mobile device.
+ *
+ * @returns {{ modal: HTMLElement, promise: Promise<boolean> }}
+ *   promise resolves to true (proceed) or false (cancel)
+ */
+export function createMobileWarningModal() {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'pinment-modal-backdrop';
+
+  const modal = document.createElement('div');
+  modal.className = 'pinment-modal';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'pinment-modal-header';
+
+  const headerLeft = document.createElement('div');
+  headerLeft.className = 'pinment-modal-header-left';
+
+  const title = document.createElement('h2');
+  title.className = 'pinment-modal-title';
+  title.innerHTML = LOGO_SVG + 'Pinment' + (typeof __PINMENT_DEV__ !== 'undefined' && __PINMENT_DEV__ ? ' (Dev)' : '');
+  headerLeft.appendChild(title);
+  header.appendChild(headerLeft);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'pinment-modal-close';
+  closeBtn.textContent = '\u00d7';
+  closeBtn.title = 'Close';
+  header.appendChild(closeBtn);
+
+  modal.appendChild(header);
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'pinment-modal-body';
+
+  const notice = document.createElement('p');
+  notice.className = 'pinment-modal-notice';
+  notice.textContent = 'It looks like you\u2019re on a mobile device. Pinment is designed for desktop browsers and may not work well on smaller screens.';
+  body.appendChild(notice);
+
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:8px;margin-top:16px;';
+
+  const desktopBtn = document.createElement('button');
+  desktopBtn.className = 'pinment-modal-btn pinment-modal-btn-primary';
+  desktopBtn.textContent = 'I\u2019m on desktop';
+  btnRow.appendChild(desktopBtn);
+
+  const proceedBtn = document.createElement('button');
+  proceedBtn.className = 'pinment-modal-btn pinment-modal-btn-secondary';
+  proceedBtn.textContent = 'Continue anyway';
+  btnRow.appendChild(proceedBtn);
+
+  body.appendChild(btnRow);
+
+  modal.appendChild(body);
+  backdrop.appendChild(modal);
+
+  const promise = new Promise((resolve) => {
+    closeBtn.addEventListener('click', () => {
+      backdrop.remove();
+      resolve(false);
+    });
+
+    desktopBtn.addEventListener('click', () => {
+      backdrop.remove();
+      resolve(true);
+    });
+
+    proceedBtn.addEventListener('click', () => {
+      backdrop.remove();
+      resolve(true);
+    });
+
+    backdrop.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeBtn.click();
+      }
+    });
+  });
+
+  return { modal: backdrop, promise };
+}
+
+/**
  * Creates a small floating pill button shown when the panel is minimized.
  *
  * @param {() => void} onRestore - callback to restore the panel
