@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createPinElement, createPanel, calculatePinPosition, restorePins, buildStyles, createWelcomeModal, createDocsSiteModal, createMinimizedButton, createExitConfirmModal, filterAndSortPins, repositionPin, highlightPinTarget, clearPinHighlight } from '../src/bookmarklet/ui.js';
+import { createPinElement, createPanel, calculatePinPosition, restorePins, buildStyles, createWelcomeModal, createDocsSiteModal, createMobileWarningModal, createMinimizedButton, createExitConfirmModal, filterAndSortPins, repositionPin, highlightPinTarget, clearPinHighlight } from '../src/bookmarklet/ui.js';
 import { createState } from '../src/state.js';
 
 beforeEach(() => {
@@ -818,6 +818,63 @@ describe('createDocsSiteModal', () => {
     modal.querySelector('.pinment-modal-close').click();
     const result = await promise;
     expect(result).toBe(false);
+  });
+});
+
+describe('createMobileWarningModal', () => {
+  it('creates a backdrop with modal content', () => {
+    const { modal } = createMobileWarningModal();
+    expect(modal.classList.contains('pinment-modal-backdrop')).toBe(true);
+    expect(modal.querySelector('.pinment-modal')).not.toBeNull();
+  });
+
+  it('contains a mobile warning message', () => {
+    const { modal } = createMobileWarningModal();
+    const notice = modal.querySelector('.pinment-modal-notice');
+    expect(notice).not.toBeNull();
+    expect(notice.textContent).toContain('mobile');
+    expect(notice.textContent).toContain('desktop');
+  });
+
+  it('has an "I\'m on desktop" button and a "Continue anyway" button', () => {
+    const { modal } = createMobileWarningModal();
+    const primary = modal.querySelector('.pinment-modal-btn-primary');
+    const secondary = modal.querySelector('.pinment-modal-btn-secondary');
+    expect(primary.textContent).toContain('desktop');
+    expect(secondary.textContent).toContain('Continue');
+  });
+
+  it('resolves with true when "I\'m on desktop" is clicked', async () => {
+    const { modal, promise } = createMobileWarningModal();
+    document.body.appendChild(modal);
+    modal.querySelector('.pinment-modal-btn-primary').click();
+    const result = await promise;
+    expect(result).toBe(true);
+  });
+
+  it('resolves with true when "Continue anyway" is clicked', async () => {
+    const { modal, promise } = createMobileWarningModal();
+    document.body.appendChild(modal);
+    modal.querySelector('.pinment-modal-btn-secondary').click();
+    const result = await promise;
+    expect(result).toBe(true);
+  });
+
+  it('resolves with false when close is clicked', async () => {
+    const { modal, promise } = createMobileWarningModal();
+    document.body.appendChild(modal);
+    modal.querySelector('.pinment-modal-close').click();
+    const result = await promise;
+    expect(result).toBe(false);
+  });
+
+  it('removes itself from the DOM on dismiss', async () => {
+    const { modal, promise } = createMobileWarningModal();
+    document.body.appendChild(modal);
+    expect(document.querySelector('.pinment-modal-backdrop')).not.toBeNull();
+    modal.querySelector('.pinment-modal-btn-primary').click();
+    await promise;
+    expect(document.querySelector('.pinment-modal-backdrop')).toBeNull();
   });
 });
 
