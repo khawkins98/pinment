@@ -42,10 +42,18 @@ header {
 }
 
 .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
   font-size: 2.25rem;
   font-weight: 800;
   letter-spacing: -0.03em;
   margin: 0;
+}
+
+.logo-icon {
+  flex-shrink: 0;
+  margin-top: -2px;
 }
 
 .tagline {
@@ -157,36 +165,40 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.25rem 0;
+  padding: 1.75rem 1.5rem 1.25rem;
   position: relative;
-}
-
-.drag-hint {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 0.5rem;
+  background: #f1f5f9;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  margin-top: 0.25rem;
 }
 
 .drag-arrow {
-  animation: bounce-up 1.5s ease-in-out infinite;
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 0;
+  animation: arrow-bounce 1.5s ease-in-out infinite;
 }
 
-@keyframes bounce-up {
-  0%, 100% { transform: translateY(0); opacity: 0.6; }
-  50% { transform: translateY(-10px); opacity: 1; }
+@keyframes arrow-bounce {
+  0%, 100% { opacity: 0.45; transform: translateX(-50%) translateY(0); }
+  50% { opacity: 0.8; transform: translateX(-50%) translateY(-8px); }
 }
 
 .drag-label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-top: 2px;
+  letter-spacing: 0.05em;
+  margin-top: 0.5rem;
 }
 
 .bookmarklet-btn {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -218,8 +230,13 @@ main {
   box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
 }
 
-.bookmarklet-icon {
+.bookmarklet-btn::before {
+  content: '';
+  display: block;
+  width: 14px;
+  height: 18px;
   flex-shrink: 0;
+  background: url("data:image/svg+xml,%3Csvg width='14' height='18' viewBox='0 0 14 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 0C3.7 0 1 2.7 1 6c0 4.6 6 11 6 11s6-6.4 6-11C13 2.7 10.3 0 7 0z' fill='%23fff'/%3E%3Ccircle cx='7' cy='6' r='2.5' fill='%233b82f6'/%3E%3C/svg%3E") no-repeat center / contain;
 }
 
 /* ---- Bookmarks bar help ---- */
@@ -314,6 +331,58 @@ kbd {
 .hint {
   color: var(--color-muted);
   font-size: 0.875rem;
+}
+
+.viewer-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+}
+
+/* Viewer action buttons */
+
+.viewer-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.viewer-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  font-family: var(--font-body);
+  transition: background 0.15s;
+}
+
+.viewer-btn-primary {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}
+
+.viewer-btn-primary:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.viewer-btn-secondary {
+  background: #fff;
+  color: var(--color-text);
+}
+
+.viewer-btn-secondary:hover {
+  background: #f1f5f9;
 }
 
 /* Pin list in viewer */

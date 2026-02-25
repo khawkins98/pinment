@@ -50,6 +50,38 @@ export function renderViewer(state) {
   pinCountP.textContent = `${state.pins.length} annotation${state.pins.length !== 1 ? 's' : ''}`;
   meta.appendChild(pinCountP);
 
+  // Action buttons
+  const actions = document.createElement('div');
+  actions.className = 'viewer-actions';
+
+  const openLink = document.createElement('a');
+  openLink.href = state.url;
+  openLink.target = '_blank';
+  openLink.rel = 'noopener';
+  openLink.className = 'viewer-btn viewer-btn-primary';
+  openLink.textContent = 'Open target page';
+  actions.appendChild(openLink);
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'viewer-btn viewer-btn-secondary';
+  copyBtn.textContent = 'Copy share URL';
+  copyBtn.addEventListener('click', () => {
+    const shareUrl = window.location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => { copyBtn.textContent = 'Copy share URL'; }, 2000);
+      }).catch(() => {
+        prompt('Copy this share URL:', shareUrl);
+      });
+    } else {
+      prompt('Copy this share URL:', shareUrl);
+    }
+  });
+  actions.appendChild(copyBtn);
+
+  meta.appendChild(actions);
+
   // Render pin list
   pinsList.innerHTML = '';
   for (const pin of state.pins) {
@@ -86,17 +118,47 @@ export function renderViewer(state) {
   }
 }
 
+export function renderError(message) {
+  const viewer = document.getElementById('viewer');
+  const install = document.getElementById('install');
+  const meta = document.getElementById('review-meta');
+  const pinsList = document.getElementById('review-pins');
+
+  if (!viewer || !meta || !pinsList) return;
+
+  if (install) install.hidden = true;
+  viewer.hidden = false;
+
+  meta.innerHTML = '';
+  const errorP = document.createElement('p');
+  errorP.className = 'viewer-error';
+  errorP.textContent = message;
+  meta.appendChild(errorP);
+
+  pinsList.innerHTML = '';
+}
+
 export function init() {
-  const state = parseHashData(window.location.hash);
-  if (state) {
-    renderViewer(state);
+  const hash = window.location.hash;
+  if (hash && hash.startsWith('#data=')) {
+    const state = parseHashData(hash);
+    if (state) {
+      renderViewer(state);
+    } else {
+      renderError('This share link appears to be corrupted or incomplete. Ask the sender for a new link.');
+    }
   }
 
   // Listen for hash changes (e.g. user navigates to a share URL)
   window.addEventListener('hashchange', () => {
-    const newState = parseHashData(window.location.hash);
-    if (newState) {
-      renderViewer(newState);
+    const newHash = window.location.hash;
+    if (newHash && newHash.startsWith('#data=')) {
+      const newState = parseHashData(newHash);
+      if (newState) {
+        renderViewer(newState);
+      } else {
+        renderError('This share link appears to be corrupted or incomplete. Ask the sender for a new link.');
+      }
     }
   });
 }

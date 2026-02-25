@@ -15,7 +15,7 @@ Pinment is a bookmarklet-driven annotation tool backed by a static hub site host
 1. **Activate** -- Reviewer navigates to the page under review and clicks the Pinment bookmarklet; the annotation UI injects into the page
 2. **Annotate** -- Reviewer clicks anywhere on the page to drop a numbered pin and add a comment
 3. **Share** -- The bookmarklet serializes all annotations into a compressed Pinment URL; the reviewer copies and sends the link
-4. **Review** -- Recipient opens the Pinment link, which shows the annotation data and target page URL; they navigate to the page, click the bookmarklet, and the saved pins appear in place
+4. **Review** -- Recipient opens the Pinment link, which shows the annotation data with action buttons; they click "Copy share URL", open the target page, click the bookmarklet (share URL is pre-filled from clipboard), and the saved pins appear in place
 
 ## Design decisions
 
@@ -36,22 +36,24 @@ Pinment is a bookmarklet-driven annotation tool backed by a static hub site host
 - [x] **FR-03** Comment entry: each pin has an editable text comment and an optional author name
 - [x] **FR-04** Comment panel: an overlay panel listing all comments by pin number, injected into the page by the bookmarklet
 - [x] **FR-05** Share URL generation: serialize all state (target page URL, viewport width, pin coordinates, comments) into a compressed URL fragment
-- [x] **FR-06** Annotation restore: when the bookmarklet is activated on the target page and a Pinment URL is provided, reconstruct all pins in their original positions
+- [x] **FR-06** Annotation restore: when the bookmarklet is activated on the target page, the welcome modal attempts to pre-fill the share URL from the clipboard; the user can also paste manually. Valid URLs reconstruct all pins in their original positions.
 - [x] **FR-07** Pin visibility toggle: show/hide all pins to see the page without annotation clutter
-- [x] **FR-08** Hub site: a static GitHub Pages site where users can install the bookmarklet (drag to bookmarks bar), view annotation data from a share URL, and get a link to the target page
+- [x] **FR-08** Hub site: a static GitHub Pages site where users can install the bookmarklet (drag to bookmarks bar), view annotation data from a share URL (with "Open target page" and "Copy share URL" action buttons), and show a clear error message when share data is corrupted or incomplete
+- [x] **FR-09** URL capacity enforcement: the Share button is disabled when annotations exceed the ~8KB URL limit; the capacity indicator shows "over limit" with the actual size
+- [x] **FR-10** Pin deletion confirmation: deleting a pin requires explicit confirmation to prevent accidental data loss
 
 ### Should have (v1.1)
 
-- **FR-09** Pin categories: label pins by type (text issue, layout issue, missing content, question)
-- **FR-10** Pin status: mark individual comments as resolved/open
-- **FR-11** Export: download annotations as a JSON file for archival or import
-- **FR-12** Multiple viewports: store annotations per viewport width so desktop and mobile reviews stay separate
+- **FR-11** Pin categories: label pins by type (text issue, layout issue, missing content, question)
+- **FR-12** Pin status: mark individual comments as resolved/open
+- **FR-13** Export: download annotations as a JSON file for archival or import
+- **FR-14** Multiple viewports: store annotations per viewport width so desktop and mobile reviews stay separate
 
 ### Could have (future)
 
-- **FR-13** Browser extension: a more integrated version of the bookmarklet with toolbar icon and persistent state
-- **FR-14** Integration with GitHub Issues: export pins as issues with coordinate and page context
-- **FR-15** Comparison mode: view annotations from two reviewers side-by-side on the same page
+- **FR-15** Browser extension: a more integrated version of the bookmarklet with toolbar icon and persistent state
+- **FR-16** Integration with GitHub Issues: export pins as issues with coordinate and page context
+- **FR-17** Comparison mode: view annotations from two reviewers side-by-side on the same page
 
 ## Non-functional requirements
 
@@ -118,11 +120,11 @@ This approach is simple and avoids fragile DOM-selector-based targeting. The tra
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| URL length limits in older browsers/tools | Annotations truncated or link fails | Compress aggressively; warn user when approaching limit; offer fallback export as JSON file |
+| URL length limits in older browsers/tools | Annotations truncated or link fails | Compress aggressively; capacity indicator warns as usage grows; Share button disabled when over ~8KB limit with clear messaging; offer fallback export as JSON file (v1.1) |
 | Bookmarklet blocked by CSP | Bookmarklet won't inject on pages with strict Content Security Policy | Document the limitation; most internal/staging sites have relaxed CSP; provide fallback instructions for adding Pinment as a local dev tool |
 | Page layout changes between annotation and review | Pins drift from their intended positions | Store viewport width; warn if recipient's viewport differs significantly; accept as a known limitation (changed page = fresh review) |
 | No real-time collaboration | Users can't annotate simultaneously | Out of scope for MVP; share sequential URLs via chat |
-| Recipient needs access to the target page | Can't view pins if page is behind auth or offline | Hub site shows annotations as a text list with coordinates; bookmarklet overlay is the enhanced experience, not the only one |
+| Recipient needs access to the target page | Can't view pins if page is behind auth or offline | Hub site shows annotations as a text list with coordinates, plus "Open target page" and "Copy share URL" buttons; bookmarklet overlay is the enhanced experience, not the only one |
 
 ## Success criteria
 
@@ -136,7 +138,7 @@ This approach is simple and avoids fragile DOM-selector-based targeting. The tra
 | Question | Decision | Rationale |
 |---|---|---|
 | Bookmarklet scoping strategy (Q5) | Namespaced CSS classes (`pinment-*`) | Simpler than shadow DOM; avoids event-handling trade-offs; sufficient isolation for MVP; can upgrade to shadow DOM later if needed |
-| Annotation restore trigger (Q6) | Prompt user to paste share URL | Avoids needing the share hash in the target page's URL; simpler implementation; clear user intent |
+| Annotation restore trigger (Q6) | Clipboard pre-fill with manual paste fallback | Attempts `navigator.clipboard.readText()` to pre-fill the share URL; falls back to manual paste if clipboard access is denied; avoids needing the share hash in the target page's URL |
 | Build pipeline | esbuild bundles bookmarklet into `javascript:` URI; Vite plugin injects into hub site HTML | Maintainable source code with proper modules; single minified output for the bookmarklet |
 | CI/CD | GitHub Actions | Runs tests and builds on PRs; deploys to GitHub Pages on merge to main |
 | Testing | Vitest with jsdom | TDD approach; fast test execution; compatible with Vite ecosystem |

@@ -403,6 +403,14 @@ export function buildStyles() {
 .pinment-modal-steps li {
   margin-bottom: 2px;
 }
+.pinment-modal-clipboard-hint {
+  color: #38a169;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.pinment-modal-input-prefilled {
+  border-color: #38a169;
+}
 .pinment-modal-dismiss {
   margin-top: 20px;
   width: 100%;
@@ -702,8 +710,26 @@ export function createWelcomeModal(validateUrl) {
       }
     });
 
-    // Focus the input once it's in the DOM
-    setTimeout(() => input.focus(), 0);
+    // Focus the input and try clipboard pre-fill
+    setTimeout(() => {
+      input.focus();
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        navigator.clipboard.readText().then((clipText) => {
+          const trimmed = (clipText || '').trim();
+          if (trimmed && trimmed.includes('#data=') && !input.value) {
+            input.value = trimmed;
+            input.classList.add('pinment-modal-input-prefilled');
+            errorEl.textContent = '';
+            const hint = document.createElement('div');
+            hint.className = 'pinment-modal-clipboard-hint';
+            hint.textContent = 'Pre-filled from clipboard';
+            inputRow.parentNode.insertBefore(hint, errorEl);
+          }
+        }).catch(() => {
+          // Clipboard access denied — no problem, user can paste manually
+        });
+      }
+    }, 0);
   });
 
   return { modal: backdrop, promise };

@@ -1,23 +1,32 @@
 # Pinment
 
-Pin comments to a live webpage. Share the annotations as a single URL. No backend, no accounts, no database.
+Pin comments to any webpage. Share the annotations as a single URL.
 
-## What it does
-
-Pinment is a bookmarklet that lets you annotate any webpage you can see in your browser. Navigate to the page -- published, staging, localhost, behind auth -- click the bookmarklet, and drop numbered pins with comments directly on the live page. Hit share, and the entire annotation state (page URL, viewport, pin positions, comments) gets compressed into a URL fragment. Send that link to a colleague: they visit the page, click the same bookmarklet, and your pins appear right where you placed them.
-
-## Why it exists
-
-Reviewing unpublished web content requires feedback that combines text with spatial context: *this* heading, *that* image, the gap between the nav and the hero. Current options are either expensive (Marker.io, Pastel), limited to text-only (Word track changes), or require screenshots that go stale the moment someone pastes them into a chat. There's no free, zero-infrastructure tool that lets you pin comments to a live page and share via URL.
+No backend. No accounts. The URL *is* the review.
 
 ## How it works
 
-1. **Activate** -- Navigate to the page you want to review and click the Pinment bookmarklet
-2. **Annotate** -- Click anywhere on the page to drop a numbered pin and add a comment
-3. **Share** -- Pinment serializes all state into a compressed URL fragment (lz-string)
-4. **Review** -- Recipient opens the link, visits the target page, clicks the bookmarklet, and pins appear in place
+1. **Add the bookmarklet** -- Visit the [Pinment site](https://khawkins98.github.io/pinment/) and drag the Pinment button to your bookmarks bar. You only need to do this once.
+2. **Navigate to any page** -- Go to the page you want to review -- published, staging, localhost, or behind auth. If you can see it, you can annotate it.
+3. **Drop pins & comment** -- Click the bookmarklet, then click anywhere on the page to place a numbered pin. Add your comment and name in the panel that appears.
+4. **Share the URL** -- Hit **Share** to copy a link. Your colleague opens it, visits the page, clicks the bookmarklet, and sees your pins right where you left them.
 
-No server. No login. The URL *is* the review.
+## Reviewing shared annotations
+
+1. Open a Pinment share link -- the hub site shows annotation details and an **Open target page** button
+2. Click **Copy share URL** then open the target page
+3. Click the Pinment bookmarklet -- if the share URL is on your clipboard it will be pre-filled automatically
+4. Click **Load** and pins appear in their original positions with comments in the panel
+
+## Good to know
+
+- Pins may drift if the page layout changes between annotation and review (a viewport mismatch warning is shown)
+- Pages with strict Content Security Policy (CSP) may block the bookmarklet
+- The URL has a practical size limit of ~8KB; a capacity indicator in the panel shows usage
+
+## Why it exists
+
+Reviewing web content requires feedback that combines text with spatial context: *this* heading, *that* image, the gap between the nav and the hero. Current options are either expensive (Marker.io, Pastel), limited to text-only (Word track changes), or require screenshots that go stale the moment someone pastes them into a chat. Pinment is a free, zero-infrastructure tool that lets you pin comments to a live page and share via URL.
 
 ## Inspiration
 
@@ -30,47 +39,26 @@ Two existing projects store full documents in the URL hash, well beyond config t
 
 Pinment extends this pattern from text/drawing to spatial annotation on live webpages.
 
-## Usage
+---
 
-### Install the bookmarklet
+## Technical details
 
-Visit the hub site and drag the **Pinment** button to your browser's bookmarks bar. You only need to do this once.
+### How state is stored
 
-### Annotate a page
+All annotation data (page URL, viewport width, pin positions, comments) is serialized to JSON and compressed with [lz-string](https://github.com/pieroxy/lz-string) into the URL hash (`#data=...`). There is no server or database -- the URL is the entire review.
 
-1. Navigate to any page you want to review
-2. Click the Pinment bookmarklet in your bookmarks bar
-3. A welcome modal appears -- click **Start fresh** to begin a new review
-4. Click anywhere on the page to drop a numbered pin
-5. In the right-hand panel, add a comment and your name for each pin
-6. Click **Share** to copy the compressed annotation URL to your clipboard
-7. Send the link via chat, email, or wherever
+### Pin coordinates
 
-### Review shared annotations
+Pin positions are stored as an x-ratio (0--1) relative to viewport width plus a y-offset in absolute pixels from the document top. The original viewport width is recorded so a mismatch warning can be shown when reviewing at a different size.
 
-1. Open the Pinment share link -- the hub site shows annotation details as a text list
-2. Click the target page link to visit the annotated page
-3. Click the Pinment bookmarklet on that page
-4. In the welcome modal, paste the share URL and click **Load annotations**
-5. Pins appear in their original positions with comments in the panel
+### Architecture
 
-### Limitations
-
-- Pins may drift if the page layout changes between annotation and review (a viewport mismatch warning is shown)
-- Pages with strict Content Security Policy (CSP) may block the bookmarklet
-- The URL has a practical size limit of ~8KB; a capacity indicator in the panel shows usage
-
-## Technical approach
-
-- **Bookmarklet** injects annotation UI directly into the target page using namespaced CSS classes (`pinment-*`) to avoid conflicts
+- **Bookmarklet** injects annotation UI directly into the target page using namespaced CSS classes (`pinment-*`) to avoid conflicts with host page styles
 - **Hub site** hosted on GitHub Pages for bookmarklet installation and viewing shared annotation data
-- **State compression** via lz-string into the URL hash (`#data=...`)
-- **Pin coordinates** stored as x-ratio (0--1) relative to viewport width + y-offset in pixels from document top, with viewport width recorded for context
-- **Annotation restore**: bookmarklet prompts the user to paste a share URL when activated
-- **Build pipeline**: esbuild bundles the bookmarklet source into a `javascript:` URI; Vite builds the hub site and injects the bundled bookmarklet
+- **Build pipeline**: esbuild bundles the bookmarklet source into a `javascript:` URI; a Vite plugin injects the bundled bookmarklet into the hub site at build time
 - **CI/CD**: GitHub Actions runs tests, builds, and deploys to GitHub Pages on merge to main
 
-## Project structure
+### Project structure
 
 ```
 src/
@@ -93,7 +81,7 @@ scripts/
 index.html                  # Hub site
 ```
 
-## Development
+### Development
 
 ```sh
 npm install
@@ -103,7 +91,3 @@ npm run test:watch    # Run tests in watch mode
 npm run build         # Build hub site (includes bookmarklet bundling)
 npm run build:bookmarklet  # Build bookmarklet only
 ```
-
-## Status
-
-All MVP functional requirements (FR-01 through FR-08) are implemented and passing 86 tests. The hub site, bookmarklet, build pipeline, and CI/CD deployment to GitHub Pages are all in place. See [PRD.md](PRD.md) for full requirements, design decisions, and the v1.1 roadmap.

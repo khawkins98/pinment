@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderViewer, parseHashData, init } from '../js/app.js';
+import { renderViewer, parseHashData, renderError, init } from '../js/app.js';
 import { createState, compress } from '../src/state.js';
 
 beforeEach(() => {
@@ -139,6 +139,48 @@ describe('renderViewer', () => {
     // Should not throw even if #viewer, #review-meta, etc. are missing
     expect(() => renderViewer(state)).not.toThrow();
   });
+
+  it('renders "Open target page" link pointing to state url', () => {
+    const state = createState('https://staging.example.com/about', 1440, []);
+    renderViewer(state);
+    const link = document.querySelector('.viewer-btn-primary');
+    expect(link).not.toBeNull();
+    expect(link.href).toBe('https://staging.example.com/about');
+    expect(link.target).toBe('_blank');
+    expect(link.textContent).toContain('Open target page');
+  });
+
+  it('renders "Copy share URL" button', () => {
+    const state = createState('https://example.com', 1440, []);
+    renderViewer(state);
+    const btn = document.querySelector('.viewer-btn-secondary');
+    expect(btn).not.toBeNull();
+    expect(btn.textContent).toContain('Copy share URL');
+  });
+});
+
+describe('renderError', () => {
+  it('shows the viewer section with error message', () => {
+    renderError('Something went wrong');
+    const viewer = document.getElementById('viewer');
+    expect(viewer.hidden).toBe(false);
+    const errorEl = document.querySelector('.viewer-error');
+    expect(errorEl).not.toBeNull();
+    expect(errorEl.textContent).toContain('Something went wrong');
+  });
+
+  it('hides the install section', () => {
+    renderError('Bad link');
+    const install = document.getElementById('install');
+    expect(install.hidden).toBe(true);
+  });
+
+  it('clears any existing pins list', () => {
+    const pinsList = document.getElementById('review-pins');
+    pinsList.innerHTML = '<div>old content</div>';
+    renderError('Error');
+    expect(pinsList.innerHTML).toBe('');
+  });
 });
 
 describe('init', () => {
@@ -164,5 +206,16 @@ describe('init', () => {
     init();
     const install = document.getElementById('install');
     expect(install.hidden).toBeFalsy();
+  });
+
+  it('shows error message when hash data is corrupted', () => {
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, hash: '#data=corrupted-garbage' },
+      writable: true,
+    });
+    init();
+    const errorEl = document.querySelector('.viewer-error');
+    expect(errorEl).not.toBeNull();
+    expect(errorEl.textContent).toContain('corrupted');
   });
 });

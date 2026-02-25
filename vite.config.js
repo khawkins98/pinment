@@ -23,6 +23,7 @@ function bookmarkletPlugin() {
 }
 
 export default defineConfig({
+  base: '/pinment/',
   plugins: [bookmarkletPlugin()],
   test: {
     environment: 'jsdom',
