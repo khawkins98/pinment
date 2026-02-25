@@ -1,0 +1,34 @@
+{
+  "name": "pinment",
+  "version": "1.0.0",
+  "description": "Pin comments to a live webpage. Share the annotations as a single URL. No backend, no accounts, no database.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:bookmarklet": "node scripts/build-bookmarklet.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khawkins98/pinment.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/khawkins98/pinment/issues"
+  },
+  "homepage": "https://github.com/khawkins98/pinment#readme",
+  "devDependencies": {
+    "esbuild": "^0.27.3",
+    "jsdom": "^28.1.0",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "lz-string": "^1.5.0"
+  }
+}

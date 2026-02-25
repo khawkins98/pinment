@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pinment — Pin comments to any webpage</title>
+  <meta name="description" content="Pin comments to a live webpage and share the annotations as a single URL. No backend, no accounts, no database.">
+  <link rel="icon" type="image/svg+xml" href="https://khawkins98.github.io/pinment/favicon.svg">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-pinment-site>
+  <div id="app">
+    <header>
+      <h1 class="logo"><svg class="logo-icon" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M16 1C9.9 1 5 5.9 5 12c0 8.4 11 19 11 19s11-10.6 11-19C27 5.9 22.1 1 16 1z" fill="#ef4444"/><circle cx="16" cy="12" r="4.5" fill="#fff"/></svg>Pinment</h1>
+      <p class="tagline">Pin comments to any webpage. Share the annotations as a single URL.</p>
+      <p class="tagline-punch">No backend. No accounts. The URL <em>is</em> the review.</p>
+    </header>
+
+    <main>
+      <!-- Onboarding + bookmarklet install -->
+      <section id="install">
+        <ol class="steps">
+
+          <li class="step step-featured">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h2>Add the bookmarklet</h2>
+              <p>Drag this button to your bookmarks bar:</p>
+
+              <div class="bookmarklet-area">
+                <svg class="drag-arrow" width="28" height="56" viewBox="0 0 24 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M12 48 L12 8" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+                  <path d="M4 16 L12 4 L20 16" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                </svg>
+                <a id="bookmarklet" class="bookmarklet-btn" href="javascript:void(0);">Pinment</a>
+                <span class="drag-label" aria-hidden="true">Drag to bookmarks bar</span>
+              </div>
+
+              <details class="bookmarks-help">
+                <summary>Can't see your bookmarks bar?</summary>
+                <div class="bookmarks-help-body">
+                  <p>Show it with a keyboard shortcut:</p>
+                  <table class="shortcut-table">
+                    <tr><td>Chrome / Edge</td><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></td></tr>
+                    <tr><td>Firefox</td><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></td></tr>
+                    <tr><td>Mac (all browsers)</td><td><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></td></tr>
+                  </table>
+                  <p>Or: right-click the bookmarklet button above, choose <strong>Bookmark This Link</strong>, and save it to your bookmarks bar.</p>
+                </div>
+              </details>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h2>Navigate to any page</h2>
+              <p>Go to the page you want to review &mdash; published, staging, localhost, or behind auth. If you can see it, you can annotate it.</p>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h2>Drop pins &amp; comment</h2>
+              <p>Click the bookmarklet, then click anywhere on the page to place a numbered pin. Add your comment and name in the panel that appears.</p>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <h2>Share the URL</h2>
+              <p>Hit <strong>Share</strong> to copy a link. Your colleague opens it, visits the page, clicks the bookmarklet, and sees your pins right where you left them.</p>
+            </div>
+          </li>
+
+        </ol>
+      </section>
+
+      <!-- Shared annotation viewer -->
+      <section id="viewer" hidden>
+        <h2>Annotation review</h2>
+        <div id="review-meta"></div>
+        <div id="review-pins" role="list"></div>
+        <p class="hint">To see these pins on the page: open the target page, click the Pinment bookmarklet, and the share URL will be pre-filled from your clipboard.</p>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Made by <a href="https://allaboutken.com/" target="_blank">Ken</a>.Inspired by the URL-as-state pattern from
+        <a href="https://alfy.blog/2025/10/31/your-url-is-your-state.html" target="_blank" rel="noopener">Ahmad El-Alfy</a>.
+        Built on ideas from
+        <a href="https://github.com/AlexW00/Buffertab" target="_blank" rel="noopener">Buffertab</a> and
+        <a href="https://github.com/taqui-786/inkash" target="_blank" rel="noopener">Inkash</a>.
+      </p>
+      <p>
+        <a href="https://github.com/khawkins98/pinment" target="_blank" rel="noopener">View on GitHub</a>
+      </p>
+    </footer>
+  </div>
+
+  <script src="js/app.js" type="module"></script>
+</body>
+</html>
