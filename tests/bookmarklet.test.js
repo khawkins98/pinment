@@ -289,17 +289,25 @@ describe('createPanel', () => {
     expect(panel.querySelector('.pinment-btn-minimize')).not.toBeNull();
   });
 
-  it('shows hint text in editable mode', () => {
+  it('shows mode bar in editable mode', () => {
     const panel = createPanel([], { editable: true });
-    const hint = panel.querySelector('.pinment-panel-hint');
-    expect(hint).not.toBeNull();
-    expect(hint.textContent).toContain('Click anywhere');
+    const modeBar = panel.querySelector('.pinment-mode-bar');
+    expect(modeBar).not.toBeNull();
+    expect(modeBar.textContent).toContain('Pin mode');
   });
 
-  it('does not show hint in read-only mode', () => {
+  it('shows browse mode when editMode is false', () => {
+    const panel = createPanel([], { editable: true, editMode: false });
+    const modeBar = panel.querySelector('.pinment-mode-bar');
+    expect(modeBar).not.toBeNull();
+    expect(modeBar.textContent).toContain('Browse mode');
+    expect(modeBar.classList.contains('pinment-mode-bar-browse')).toBe(true);
+  });
+
+  it('does not show mode bar in read-only mode', () => {
     const panel = createPanel([]);
-    const hint = panel.querySelector('.pinment-panel-hint');
-    expect(hint).toBeNull();
+    const modeBar = panel.querySelector('.pinment-mode-bar');
+    expect(modeBar).toBeNull();
   });
 
   it('renders textarea and author input in editable mode', () => {

@@ -241,6 +241,57 @@ export function buildStyles() {
   z-index: 2147483639;
   cursor: crosshair;
 }
+.pinment-mode-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  gap: 8px;
+}
+.pinment-mode-bar-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pinment-mode-bar-edit {
+  background: #fffbeb;
+  color: #92400e;
+  border-bottom-color: #fcd34d;
+}
+.pinment-mode-bar-browse {
+  background: #eff6ff;
+  color: #1e40af;
+  border-bottom-color: #93c5fd;
+}
+.pinment-mode-toggle {
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.pinment-mode-bar-edit .pinment-mode-toggle {
+  background: #fff;
+  border-color: #d97706;
+  color: #92400e;
+}
+.pinment-mode-bar-edit .pinment-mode-toggle:hover {
+  background: #fef3c7;
+}
+.pinment-mode-bar-browse .pinment-mode-toggle {
+  background: #fff;
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+.pinment-mode-bar-browse .pinment-mode-toggle:hover {
+  background: #dbeafe;
+}
 .pinment-highlight {
   outline: 2px solid #3182ce !important;
   outline-offset: 2px !important;
@@ -857,7 +908,7 @@ export function createPinElement(pin) {
 }
 
 export function createPanel(pins, options = {}) {
-  const { editable = false, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport, onReply, onImport, filters = null, onFilterChange = null, onPinHover = null, onPinHoverEnd = null } = options;
+  const { editable = false, editMode = true, onEditModeToggle, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport, onReply, onImport, filters = null, onFilterChange = null, onPinHover = null, onPinHoverEnd = null } = options;
 
   const panel = document.createElement('div');
   panel.className = 'pinment-panel';
@@ -865,7 +916,7 @@ export function createPanel(pins, options = {}) {
   // Header
   const header = document.createElement('div');
   header.className = 'pinment-panel-header';
-  header.innerHTML = `<span>${LOGO_SVG}Pinment</span>`;
+  header.innerHTML = `<span>${LOGO_SVG}Pinment${typeof __PINMENT_DEV__ !== 'undefined' && __PINMENT_DEV__ ? ' (Dev)' : ''}</span>`;
 
   const headerBtns = document.createElement('div');
   headerBtns.className = 'pinment-panel-header-btns';
@@ -888,12 +939,23 @@ export function createPanel(pins, options = {}) {
   header.appendChild(headerBtns);
   panel.appendChild(header);
 
-  // Hint
+  // Mode bar (edit/browse toggle)
   if (editable) {
-    const hint = document.createElement('div');
-    hint.className = 'pinment-panel-hint';
-    hint.textContent = 'Click anywhere on the page to add a pin.';
-    panel.appendChild(hint);
+    const modeBar = document.createElement('div');
+    modeBar.className = 'pinment-mode-bar ' + (editMode ? 'pinment-mode-bar-edit' : 'pinment-mode-bar-browse');
+
+    const label = document.createElement('span');
+    label.className = 'pinment-mode-bar-label';
+    label.textContent = editMode ? 'Pin mode \u2014 click page to add pins' : 'Browse mode \u2014 interact with the page';
+    modeBar.appendChild(label);
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'pinment-mode-toggle';
+    toggleBtn.textContent = editMode ? 'Browse' : 'Add pins';
+    if (onEditModeToggle) toggleBtn.addEventListener('click', onEditModeToggle);
+    modeBar.appendChild(toggleBtn);
+
+    panel.appendChild(modeBar);
   }
 
   // Filter toolbar
@@ -1309,7 +1371,7 @@ export function createWelcomeModal(validateUrl, validateImport) {
 
   const title = document.createElement('h2');
   title.className = 'pinment-modal-title';
-  title.innerHTML = LOGO_SVG + 'Pinment';
+  title.innerHTML = LOGO_SVG + 'Pinment' + (typeof __PINMENT_DEV__ !== 'undefined' && __PINMENT_DEV__ ? ' (Dev)' : '');
   headerLeft.appendChild(title);
 
   const link = document.createElement('a');
@@ -1531,7 +1593,7 @@ export function createDocsSiteModal() {
 
   const title = document.createElement('h2');
   title.className = 'pinment-modal-title';
-  title.innerHTML = LOGO_SVG + 'Pinment';
+  title.innerHTML = LOGO_SVG + 'Pinment' + (typeof __PINMENT_DEV__ !== 'undefined' && __PINMENT_DEV__ ? ' (Dev)' : '');
   headerLeft.appendChild(title);
   header.appendChild(headerLeft);
 
