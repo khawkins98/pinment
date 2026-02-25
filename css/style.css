@@ -104,6 +104,12 @@ main {
   display: none;
 }
 
+.viewer-getting-started {
+  font-size: 0.95rem;
+  color: var(--color-muted);
+  margin: 0 0 0.5rem;
+}
+
 .step {
   display: flex;
   gap: 16px;
@@ -327,7 +333,7 @@ kbd {
   font-size: 0.9rem;
 }
 
-#review-meta a {
+#review-meta p a {
   color: var(--color-accent);
   word-break: break-all;
 }

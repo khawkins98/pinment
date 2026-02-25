@@ -30,6 +30,13 @@ export function renderViewer(state) {
     install.querySelectorAll('.step:not(.step-featured)').forEach(s => { s.hidden = true; });
     const stepsList = install.querySelector('.steps');
     if (stepsList) stepsList.classList.add('steps-compact');
+    // Add getting-started hint above the bookmarklet step
+    if (!install.querySelector('.viewer-getting-started')) {
+      const hint = document.createElement('p');
+      hint.className = 'viewer-getting-started';
+      hint.textContent = 'New to Pinment? Get started by adding the bookmarklet:';
+      install.insertBefore(hint, stepsList);
+    }
     // Move viewer above the install section
     if (install.parentNode === viewer.parentNode) {
       viewer.parentNode.insertBefore(viewer, install);

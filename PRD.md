@@ -66,6 +66,7 @@ Pinment is a client-side bookmarklet that injects an annotation UI onto any live
 - **FR-28** GitHub Issues export: export pins directly as GitHub issues
 - **FR-29** Multi-reviewer comparison: merge/diff annotations from multiple share URLs
 - **FR-30** Keyboard shortcuts: Esc to cancel pin mode, N for new pin, arrows to navigate
+- **FR-31** PDF report export: generate a PDF with a screenshot of the annotated page and all comments, for offline sharing or archival
 
 ## Non-functional requirements
 
