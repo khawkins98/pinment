@@ -24,6 +24,7 @@ The URL *is* the review. Recipients open it, visit the page, click the bookmarkl
 | Categories & status | Label pins (text, layout, missing, question) and mark as resolved |
 | Dynamic loading | Bookmarklet is a tiny loader (~200 chars) that fetches the full script from the host site, staying well under browser URL limits |
 | Version display | Panel footer shows current version and release date |
+| Filter & sort | Filter pins by category, status, or author; sort by pin number, category, or status |
 | Works anywhere | Bookmarklet runs on any page you can visit |
 
 ## Quick start
