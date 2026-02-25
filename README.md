@@ -17,7 +17,8 @@ The URL *is* the review. Recipients open it, visit the page, click the bookmarkl
 |---|---|
 | Pin comments | Drop numbered pins on any live webpage and attach comments |
 | Share as URL | All annotations compress into a single link via lz-string |
-| Element anchoring | Pins attach to DOM elements via CSS selectors, surviving responsive layouts |
+| Element anchoring | Pins attach to DOM elements via CSS selectors, repositioning live on browser resize |
+| Element highlight | Hovering a pin or panel comment outlines the anchored DOM element |
 | Import & export JSON | Save annotation sessions as JSON files; import them back anytime |
 | Drag to reposition | Move pins after placing them -- no delete and re-create |
 | Thread replies | Reply to any pin to create a conversation thread |

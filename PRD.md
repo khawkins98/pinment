@@ -57,13 +57,15 @@ Pinment is a client-side bookmarklet that injects an annotation UI onto any live
 - **FR-22** Dynamic bookmarklet loading: tiny `javascript:` loader (~200 chars) fetches the full script from the host site, removing browser bookmark URL size limits and enabling instant updates without re-installing
 - **FR-23** Version display: panel footer shows current version and release date
 - **FR-24** Filter/sort pins: filter by category, status, or author; sort by pin number, category, or status
+- **FR-25** Live pin repositioning: pins reposition on browser resize to stay anchored to their target DOM elements
+- **FR-26** Element highlight: hovering a pin dot or panel comment outlines the anchored DOM element
 
 ### Future
 
-- **FR-25** Browser extension: bypass CSP restrictions, enable richer UX
-- **FR-26** GitHub Issues export: export pins directly as GitHub issues
-- **FR-27** Multi-reviewer comparison: merge/diff annotations from multiple share URLs
-- **FR-28** Keyboard shortcuts: Esc to cancel pin mode, N for new pin, arrows to navigate
+- **FR-27** Browser extension: bypass CSP restrictions, enable richer UX
+- **FR-28** GitHub Issues export: export pins directly as GitHub issues
+- **FR-29** Multi-reviewer comparison: merge/diff annotations from multiple share URLs
+- **FR-30** Keyboard shortcuts: Esc to cancel pin mode, N for new pin, arrows to navigate
 
 ## Non-functional requirements
 
