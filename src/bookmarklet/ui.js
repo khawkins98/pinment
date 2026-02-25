@@ -204,6 +204,28 @@ export function buildStyles() {
 .pinment-capacity-fill-danger {
   background: #e53e3e;
 }
+.pinment-btn-share:disabled {
+  background: #a0aec0;
+  border-color: #a0aec0;
+  cursor: not-allowed;
+}
+.pinment-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 340px;
+  background: #1a202c;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  z-index: 2147483643;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  animation: pinment-toast-in 0.2s ease;
+}
+@keyframes pinment-toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .pinment-overlay {
   position: fixed;
   inset: 0;
@@ -233,54 +255,55 @@ export function buildStyles() {
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  width: 420px;
+  width: 400px;
   max-width: calc(100vw - 32px);
-  padding: 28px;
+  padding: 0;
   color: #1a202c;
   font-size: 14px;
   line-height: 1.5;
+  overflow: hidden;
+}
+.pinment-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+}
+.pinment-modal-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.pinment-modal-title {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0;
+}
+.pinment-modal-link {
+  color: #718096;
+  font-size: 12px;
+  text-decoration: none;
+}
+.pinment-modal-link:hover {
+  color: #3182ce;
+  text-decoration: underline;
 }
 .pinment-modal-close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
   background: none;
   border: none;
-  font-size: 22px;
+  font-size: 20px;
   color: #a0aec0;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 0;
   line-height: 1;
   font-family: system-ui, sans-serif;
+  margin: -4px -4px 0 0;
 }
 .pinment-modal-close:hover {
   color: #4a5568;
 }
-.pinment-modal-title {
-  font-size: 20px;
-  font-weight: 800;
-  margin: 0 0 4px;
-}
-.pinment-modal-link {
-  display: inline-block;
-  color: #3182ce;
-  font-size: 13px;
-  text-decoration: none;
-  margin-bottom: 20px;
-}
-.pinment-modal-link:hover {
-  text-decoration: underline;
-}
-.pinment-modal-group {
-  background: #f7fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 16px;
-}
-.pinment-modal-group-desc {
-  font-size: 13px;
-  color: #718096;
-  margin: 0 0 10px;
+.pinment-modal-body {
+  padding: 20px 24px 24px;
 }
 .pinment-modal-label {
   display: block;
@@ -289,13 +312,18 @@ export function buildStyles() {
   color: #4a5568;
   margin-bottom: 6px;
 }
+.pinment-modal-input-row {
+  display: flex;
+  gap: 8px;
+}
 .pinment-modal-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 2px solid #e2e8f0;
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1.5px solid #d1d5db;
   border-radius: 6px;
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   box-sizing: border-box;
   transition: border-color 0.15s;
 }
@@ -309,13 +337,8 @@ export function buildStyles() {
 .pinment-modal-error {
   color: #e53e3e;
   font-size: 12px;
-  margin-top: 6px;
-  min-height: 18px;
-}
-.pinment-modal-group-action {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 10px;
+  margin-top: 4px;
+  min-height: 16px;
 }
 .pinment-modal-divider {
   display: flex;
@@ -323,32 +346,37 @@ export function buildStyles() {
   gap: 12px;
   margin: 16px 0;
   color: #a0aec0;
-  font-size: 13px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 .pinment-modal-divider::before,
 .pinment-modal-divider::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: #e2e8f0;
+  background: #e5e7eb;
 }
 .pinment-modal-btn {
-  padding: 10px 16px;
-  border: 1px solid #cbd5e0;
+  padding: 8px 16px;
+  border: 1.5px solid #d1d5db;
   border-radius: 6px;
   cursor: pointer;
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
 }
 .pinment-modal-btn-primary {
   background: #3182ce;
   color: #fff;
   border-color: #3182ce;
+  flex-shrink: 0;
 }
 .pinment-modal-btn-primary:hover {
   background: #2b6cb0;
+  border-color: #2b6cb0;
 }
 .pinment-modal-btn-secondary {
   background: #fff;
@@ -356,7 +384,28 @@ export function buildStyles() {
   width: 100%;
 }
 .pinment-modal-btn-secondary:hover {
-  background: #edf2f7;
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+.pinment-modal-notice {
+  color: #4a5568;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+.pinment-modal-steps {
+  margin: 12px 0 0;
+  padding: 0 0 0 20px;
+  color: #4a5568;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.pinment-modal-steps li {
+  margin-bottom: 2px;
+}
+.pinment-modal-dismiss {
+  margin-top: 20px;
+  width: 100%;
 }
 `;
 }
@@ -515,11 +564,11 @@ export function restorePins(state, container, currentViewportWidth) {
 /**
  * Creates a welcome modal that replaces the native prompt().
  * Returns a Promise that resolves with the pasted URL string,
- * or null if the user chooses to start fresh.
+ * null if the user chooses to start annotating, or false if cancelled.
  *
  * @param {(url: string) => object|null} validateUrl - validator that returns
  *   parsed state if the URL is valid, or null if not.
- * @returns {{ modal: HTMLElement, promise: Promise<string|null> }}
+ * @returns {{ modal: HTMLElement, promise: Promise<string|null|false> }}
  */
 export function createWelcomeModal(validateUrl) {
   const backdrop = document.createElement('div');
@@ -528,50 +577,88 @@ export function createWelcomeModal(validateUrl) {
   const modal = document.createElement('div');
   modal.className = 'pinment-modal';
 
+  // Header row: title + link on left, close on right
+  const header = document.createElement('div');
+  header.className = 'pinment-modal-header';
+
+  const headerLeft = document.createElement('div');
+  headerLeft.className = 'pinment-modal-header-left';
+
   const title = document.createElement('h2');
   title.className = 'pinment-modal-title';
   title.textContent = 'Pinment';
-  modal.appendChild(title);
+  headerLeft.appendChild(title);
 
-  const desc = document.createElement('p');
-  desc.className = 'pinment-modal-desc';
-  desc.textContent = 'Load annotations from a share URL, or start a fresh review on this page.';
-  modal.appendChild(desc);
+  const link = document.createElement('a');
+  link.className = 'pinment-modal-link';
+  link.href = 'https://khawkins98.github.io/pinment/';
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = 'What is Pinment?';
+  headerLeft.appendChild(link);
 
+  header.appendChild(headerLeft);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'pinment-modal-close';
+  closeBtn.textContent = '\u00d7';
+  closeBtn.title = 'Cancel';
+  header.appendChild(closeBtn);
+
+  modal.appendChild(header);
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'pinment-modal-body';
+
+  // Share URL: label + input row with inline load button
   const label = document.createElement('label');
   label.className = 'pinment-modal-label';
-  label.textContent = 'Share URL';
-  modal.appendChild(label);
+  label.textContent = 'Paste a share URL to load annotations';
+  body.appendChild(label);
+
+  const inputRow = document.createElement('div');
+  inputRow.className = 'pinment-modal-input-row';
 
   const input = document.createElement('input');
   input.className = 'pinment-modal-input';
   input.type = 'text';
   input.placeholder = 'https://khawkins98.github.io/pinment/#data=...';
   input.setAttribute('autocomplete', 'off');
-  modal.appendChild(input);
-
-  const errorEl = document.createElement('div');
-  errorEl.className = 'pinment-modal-error';
-  modal.appendChild(errorEl);
-
-  const actions = document.createElement('div');
-  actions.className = 'pinment-modal-actions';
-
-  const freshBtn = document.createElement('button');
-  freshBtn.className = 'pinment-modal-btn pinment-modal-btn-secondary';
-  freshBtn.textContent = 'Start fresh';
+  inputRow.appendChild(input);
 
   const loadBtn = document.createElement('button');
   loadBtn.className = 'pinment-modal-btn pinment-modal-btn-primary';
-  loadBtn.textContent = 'Load annotations';
+  loadBtn.textContent = 'Load';
+  inputRow.appendChild(loadBtn);
 
-  actions.appendChild(freshBtn);
-  actions.appendChild(loadBtn);
-  modal.appendChild(actions);
+  body.appendChild(inputRow);
 
+  const errorEl = document.createElement('div');
+  errorEl.className = 'pinment-modal-error';
+  body.appendChild(errorEl);
+
+  // Divider
+  const divider = document.createElement('div');
+  divider.className = 'pinment-modal-divider';
+  divider.textContent = 'or';
+  body.appendChild(divider);
+
+  // Start annotating button
+  const freshBtn = document.createElement('button');
+  freshBtn.className = 'pinment-modal-btn pinment-modal-btn-secondary';
+  freshBtn.textContent = 'Start annotating on this page';
+  body.appendChild(freshBtn);
+
+  modal.appendChild(body);
   backdrop.appendChild(modal);
 
   const promise = new Promise((resolve) => {
+    closeBtn.addEventListener('click', () => {
+      backdrop.remove();
+      resolve(false);
+    });
+
     freshBtn.addEventListener('click', () => {
       backdrop.remove();
       resolve(null);
@@ -580,8 +667,8 @@ export function createWelcomeModal(validateUrl) {
     loadBtn.addEventListener('click', () => {
       const value = input.value.trim();
       if (!value) {
-        backdrop.remove();
-        resolve(null);
+        input.classList.add('pinment-modal-input-error');
+        errorEl.textContent = 'Please paste a Pinment share URL first.';
         return;
       }
       if (validateUrl && !validateUrl(value)) {
@@ -607,8 +694,103 @@ export function createWelcomeModal(validateUrl) {
       }
     });
 
+    // Allow Escape key to cancel
+    backdrop.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeBtn.click();
+      }
+    });
+
     // Focus the input once it's in the DOM
     setTimeout(() => input.focus(), 0);
+  });
+
+  return { modal: backdrop, promise };
+}
+
+/**
+ * Creates a modal shown when the bookmarklet is run on the Pinment
+ * documentation site itself. Explains how to use it on another page.
+ * The returned promise always resolves with false (cancel).
+ *
+ * @returns {{ modal: HTMLElement, promise: Promise<false> }}
+ */
+export function createDocsSiteModal() {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'pinment-modal-backdrop';
+
+  const modal = document.createElement('div');
+  modal.className = 'pinment-modal';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'pinment-modal-header';
+
+  const headerLeft = document.createElement('div');
+  headerLeft.className = 'pinment-modal-header-left';
+
+  const title = document.createElement('h2');
+  title.className = 'pinment-modal-title';
+  title.textContent = 'Pinment';
+  headerLeft.appendChild(title);
+  header.appendChild(headerLeft);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'pinment-modal-close';
+  closeBtn.textContent = '\u00d7';
+  closeBtn.title = 'Close';
+  header.appendChild(closeBtn);
+
+  modal.appendChild(header);
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'pinment-modal-body';
+
+  const notice = document.createElement('p');
+  notice.className = 'pinment-modal-notice';
+  notice.textContent = 'You\u2019re on the Pinment documentation page. To annotate a website, add the bookmarklet to your browser first:';
+  body.appendChild(notice);
+
+  const steps = document.createElement('ol');
+  steps.className = 'pinment-modal-steps';
+  const step1 = document.createElement('li');
+  step1.textContent = 'Drag the Pinment button above to your bookmarks bar';
+  const step2 = document.createElement('li');
+  step2.textContent = 'Navigate to the page you want to review';
+  const step3 = document.createElement('li');
+  step3.textContent = 'Click the bookmarklet from your bookmarks bar';
+  steps.appendChild(step1);
+  steps.appendChild(step2);
+  steps.appendChild(step3);
+  body.appendChild(steps);
+
+  const dismissBtn = document.createElement('button');
+  dismissBtn.className = 'pinment-modal-btn pinment-modal-btn-secondary pinment-modal-dismiss';
+  dismissBtn.textContent = 'Got it';
+  body.appendChild(dismissBtn);
+
+  modal.appendChild(body);
+  backdrop.appendChild(modal);
+
+  const promise = new Promise((resolve) => {
+    closeBtn.addEventListener('click', () => {
+      backdrop.remove();
+      resolve(false);
+    });
+
+    dismissBtn.addEventListener('click', () => {
+      backdrop.remove();
+      resolve(false);
+    });
+
+    backdrop.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeBtn.click();
+      }
+    });
   });
 
   return { modal: backdrop, promise };

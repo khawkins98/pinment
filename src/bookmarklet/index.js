@@ -5,7 +5,7 @@
  * allows pin placement, and provides share/restore functionality.
  * All DOM elements use the pinment- class namespace to avoid conflicts.
  */
-import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal } from './ui.js';
+import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal } from './ui.js';
 import { compress, parseShareUrl, createShareUrl, estimateUrlSize, SCHEMA_VERSION, MAX_URL_BYTES } from '../state.js';
 const STORAGE_KEY_AUTHOR = 'pinment-author';
 const PANEL_ID = 'pinment-panel';
@@ -33,6 +33,14 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   styleEl.textContent = buildStyles();
   document.head.appendChild(styleEl);
 
+  // Detect if running on the Pinment docs site itself
+  if (document.body.hasAttribute('data-pinment-site')) {
+    const { modal, promise } = createDocsSiteModal();
+    document.body.appendChild(modal);
+    promise.then(() => deactivate());
+    return;
+  }
+
   // Create pin container (covers entire document for absolute positioning)
   const pinContainer = document.createElement('div');
   pinContainer.id = PIN_CONTAINER_ID;
@@ -52,6 +60,11 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   document.body.appendChild(modal);
 
   promise.then((shareUrl) => {
+    // User cancelled – tear down and exit
+    if (shareUrl === false) {
+      deactivate();
+      return;
+    }
     if (shareUrl) {
       const loaded = parseShareUrl(shareUrl);
       if (loaded) {
@@ -160,6 +173,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   }
 
   function handleDelete(pinId) {
+    if (!confirm('Delete this pin?')) return;
     state.pins = state.pins.filter((p) => p.id !== pinId);
     // Remove pin element from page
     const pinEl = pinContainer.querySelector(`[data-pinment-id="${pinId}"]`);
@@ -172,30 +186,48 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     pinContainer.style.display = state.pinsVisible ? '' : 'none';
   }
 
-  function handleShare() {
-    const data = {
+  function buildStateData() {
+    return {
       v: SCHEMA_VERSION,
       url: window.location.href.split('#')[0],
       viewport: state.viewportWidth,
       pins: state.pins,
     };
-    const shareUrl = createShareUrl(data);
+  }
+
+  function handleShare() {
+    const data = buildStateData();
     const size = estimateUrlSize(data);
 
     if (size > MAX_URL_BYTES) {
-      alert(`Warning: the share URL is ${Math.round(size / 1024)}KB, which may be too long for some browsers. Consider reducing the number of annotations.`);
+      alert(`The share URL is ${Math.round(size / 1024)}KB, which exceeds the ~${Math.round(MAX_URL_BYTES / 1024)}KB limit. Remove some annotations or shorten comments before sharing.`);
+      return;
     }
+
+    const shareUrl = createShareUrl(data);
 
     // Copy to clipboard
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert('Share URL copied to clipboard!');
+        showShareConfirmation();
       }).catch(() => {
         prompt('Copy this share URL:', shareUrl);
       });
     } else {
       prompt('Copy this share URL:', shareUrl);
     }
+  }
+
+  function showShareConfirmation() {
+    const panel = document.getElementById(PANEL_ID);
+    if (!panel) return;
+    let toast = panel.querySelector('.pinment-toast');
+    if (toast) toast.remove();
+    toast = document.createElement('div');
+    toast.className = 'pinment-toast';
+    toast.textContent = 'Share URL copied to clipboard';
+    panel.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
   }
 
   function scrollToComment(pinId) {
@@ -230,25 +262,32 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       if (footer) footer.appendChild(capacityEl);
     }
 
-    const data = {
-      v: SCHEMA_VERSION,
-      url: window.location.href.split('#')[0],
-      viewport: state.viewportWidth,
-      pins: state.pins,
-    };
+    const data = buildStateData();
     const size = estimateUrlSize(data);
     const pct = Math.min(100, Math.round((size / MAX_URL_BYTES) * 100));
+    const overLimit = size > MAX_URL_BYTES;
 
     let fillClass = 'pinment-capacity-fill';
-    if (pct > 80) fillClass += ' pinment-capacity-fill-danger';
+    if (overLimit || pct > 80) fillClass += ' pinment-capacity-fill-danger';
     else if (pct > 60) fillClass += ' pinment-capacity-fill-warn';
 
+    const label = overLimit
+      ? `URL capacity: over limit (${Math.round(size / 1024)}KB / ${Math.round(MAX_URL_BYTES / 1024)}KB)`
+      : `URL capacity: ${pct}%`;
+
     capacityEl.innerHTML = `
-      <span>URL capacity: ${pct}%</span>
+      <span>${label}</span>
       <div class="pinment-capacity-bar">
-        <div class="${fillClass}" style="width:${pct}%"></div>
+        <div class="${fillClass}" style="width:${Math.min(pct, 100)}%"></div>
       </div>
     `;
+
+    // Disable share button when over limit
+    const shareBtn = panel.querySelector('.pinment-btn-share');
+    if (shareBtn) {
+      shareBtn.disabled = overLimit;
+      shareBtn.title = overLimit ? 'Remove annotations or shorten comments to share' : '';
+    }
   }
 
   function deactivate() {

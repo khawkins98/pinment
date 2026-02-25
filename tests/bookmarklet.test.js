@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createPinElement, createPanel, calculatePinPosition, restorePins, buildStyles, createWelcomeModal } from '../src/bookmarklet/ui.js';
+import { createPinElement, createPanel, calculatePinPosition, restorePins, buildStyles, createWelcomeModal, createDocsSiteModal } from '../src/bookmarklet/ui.js';
 import { createState } from '../src/state.js';
 
 beforeEach(() => {
@@ -248,16 +248,17 @@ describe('createWelcomeModal', () => {
     expect(modal.querySelector('.pinment-modal')).not.toBeNull();
   });
 
-  it('contains title, description, input, and two action buttons', () => {
+  it('contains title, link, input, and action buttons', () => {
     const { modal } = createWelcomeModal();
     expect(modal.querySelector('.pinment-modal-title').textContent).toBe('Pinment');
-    expect(modal.querySelector('.pinment-modal-desc')).not.toBeNull();
+    expect(modal.querySelector('.pinment-modal-link')).not.toBeNull();
     expect(modal.querySelector('.pinment-modal-input')).not.toBeNull();
-    expect(modal.querySelector('.pinment-modal-btn-primary').textContent).toBe('Load annotations');
-    expect(modal.querySelector('.pinment-modal-btn-secondary').textContent).toBe('Start fresh');
+    expect(modal.querySelector('.pinment-modal-btn-primary').textContent).toBe('Load');
+    expect(modal.querySelector('.pinment-modal-btn-secondary').textContent).toBe('Start annotating on this page');
+    expect(modal.querySelector('.pinment-modal-close')).not.toBeNull();
   });
 
-  it('resolves with null when "Start fresh" is clicked', async () => {
+  it('resolves with null when "Start annotating" is clicked', async () => {
     const { modal, promise } = createWelcomeModal();
     document.body.appendChild(modal);
     modal.querySelector('.pinment-modal-btn-secondary').click();
@@ -265,12 +266,22 @@ describe('createWelcomeModal', () => {
     expect(result).toBeNull();
   });
 
-  it('resolves with null when "Load annotations" is clicked with empty input', async () => {
+  it('resolves with false when cancel is clicked', async () => {
     const { modal, promise } = createWelcomeModal();
     document.body.appendChild(modal);
-    modal.querySelector('.pinment-modal-btn-primary').click();
+    modal.querySelector('.pinment-modal-close').click();
     const result = await promise;
-    expect(result).toBeNull();
+    expect(result).toBe(false);
+  });
+
+  it('shows error when "Load annotations" is clicked with empty input', async () => {
+    const { modal } = createWelcomeModal();
+    document.body.appendChild(modal);
+    modal.querySelector('.pinment-modal-btn-primary').click();
+    // Modal should still be in the DOM
+    expect(document.querySelector('.pinment-modal-backdrop')).not.toBeNull();
+    const errorEl = modal.querySelector('.pinment-modal-error');
+    expect(errorEl.textContent).toContain('paste');
   });
 
   it('resolves with URL string when valid URL is submitted', async () => {
@@ -333,5 +344,39 @@ describe('createWelcomeModal', () => {
     modal.querySelector('.pinment-modal-btn-primary').click();
     const result = await promise;
     expect(result).toBe('https://example.com/#data=abc');
+  });
+});
+
+describe('createDocsSiteModal', () => {
+  it('creates a backdrop with modal content', () => {
+    const { modal } = createDocsSiteModal();
+    expect(modal.classList.contains('pinment-modal-backdrop')).toBe(true);
+    expect(modal.querySelector('.pinment-modal')).not.toBeNull();
+  });
+
+  it('contains instructions about using bookmarks bar', () => {
+    const { modal } = createDocsSiteModal();
+    const notice = modal.querySelector('.pinment-modal-notice');
+    expect(notice).not.toBeNull();
+    expect(notice.textContent).toContain('documentation');
+    const steps = modal.querySelector('.pinment-modal-steps');
+    expect(steps).not.toBeNull();
+    expect(steps.children.length).toBe(3);
+  });
+
+  it('resolves with false when dismiss is clicked', async () => {
+    const { modal, promise } = createDocsSiteModal();
+    document.body.appendChild(modal);
+    modal.querySelector('.pinment-modal-btn-secondary').click();
+    const result = await promise;
+    expect(result).toBe(false);
+  });
+
+  it('resolves with false when close is clicked', async () => {
+    const { modal, promise } = createDocsSiteModal();
+    document.body.appendChild(modal);
+    modal.querySelector('.pinment-modal-close').click();
+    const result = await promise;
+    expect(result).toBe(false);
   });
 });
