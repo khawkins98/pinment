@@ -282,9 +282,9 @@ describe('createPanel', () => {
   });
 
   it('includes action buttons', () => {
-    const panel = createPanel([]);
+    const panel = createPanel([], { editable: true, onToggle: () => {} });
     expect(panel.querySelector('.pinment-btn-share')).not.toBeNull();
-    expect(panel.querySelector('.pinment-btn-toggle')).not.toBeNull();
+    expect(panel.querySelector('.pinment-btn-icon')).not.toBeNull();
     expect(panel.querySelector('.pinment-btn-close')).not.toBeNull();
     expect(panel.querySelector('.pinment-btn-minimize')).not.toBeNull();
   });
@@ -352,10 +352,12 @@ describe('createPanel', () => {
     expect(onShare).toHaveBeenCalledOnce();
   });
 
-  it('invokes onToggle callback when toggle button is clicked', () => {
+  it('invokes onToggle callback when visibility button is clicked', () => {
     const onToggle = vi.fn();
-    const panel = createPanel([], { onToggle });
-    panel.querySelector('.pinment-btn-toggle').click();
+    const panel = createPanel([], { editable: true, onToggle });
+    const btns = panel.querySelectorAll('.pinment-btn-icon');
+    // First icon button in mode bar is the visibility toggle
+    btns[0].click();
     expect(onToggle).toHaveBeenCalledOnce();
   });
 
@@ -387,12 +389,12 @@ describe('createPanel', () => {
     expect(shareBtn.textContent).toContain('Share');
   });
 
-  it('toggle button has no visible text, only SVG', () => {
-    const panel = createPanel([]);
-    const toggleBtn = panel.querySelector('.pinment-btn-toggle');
-    expect(toggleBtn.querySelector('svg')).not.toBeNull();
+  it('visibility button has no visible text, only SVG', () => {
+    const panel = createPanel([], { editable: true, onToggle: () => {} });
+    const iconBtn = panel.querySelector('.pinment-btn-icon');
+    expect(iconBtn.querySelector('svg')).not.toBeNull();
     // Should have no text nodes with visible content
-    const textContent = Array.from(toggleBtn.childNodes)
+    const textContent = Array.from(iconBtn.childNodes)
       .filter(n => n.nodeType === 3)
       .map(n => n.textContent.trim())
       .join('');

@@ -12,6 +12,9 @@ const LOGO_SVG = '<svg width="18" height="18" viewBox="0 0 32 32" fill="none" ar
 
 export function buildStyles() {
   return `
+[class^="pinment-"] *, [class^="pinment-"] {
+  font-family: system-ui, -apple-system, sans-serif;
+}
 .pinment-pin {
   position: absolute;
   width: 28px;
@@ -291,6 +294,30 @@ export function buildStyles() {
 }
 .pinment-mode-bar-browse .pinment-mode-toggle:hover {
   background: #dbeafe;
+}
+.pinment-mode-bar-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pinment-btn-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+  transition: background 0.15s, opacity 0.15s;
+}
+.pinment-btn-icon:hover {
+  background: rgba(0,0,0,0.08);
+  opacity: 1;
 }
 .pinment-highlight {
   outline: 2px solid #3182ce !important;
@@ -908,7 +935,7 @@ export function createPinElement(pin) {
 }
 
 export function createPanel(pins, options = {}) {
-  const { editable = false, editMode = true, onEditModeToggle, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport, onReply, onImport, filters = null, onFilterChange = null, onPinHover = null, onPinHoverEnd = null } = options;
+  const { editable = false, editMode = true, onEditModeToggle, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport, onReply, onImport, onStartNew, filters = null, onFilterChange = null, onPinHover = null, onPinHoverEnd = null } = options;
 
   const panel = document.createElement('div');
   panel.className = 'pinment-panel';
@@ -939,7 +966,7 @@ export function createPanel(pins, options = {}) {
   header.appendChild(headerBtns);
   panel.appendChild(header);
 
-  // Mode bar (edit/browse toggle)
+  // Mode bar (edit/browse toggle + toolbar actions)
   if (editable) {
     const modeBar = document.createElement('div');
     modeBar.className = 'pinment-mode-bar ' + (editMode ? 'pinment-mode-bar-edit' : 'pinment-mode-bar-browse');
@@ -949,12 +976,32 @@ export function createPanel(pins, options = {}) {
     label.textContent = editMode ? 'Pin mode \u2014 click page to add pins' : 'Browse mode \u2014 interact with the page';
     modeBar.appendChild(label);
 
-    const toggleBtn = document.createElement('button');
-    toggleBtn.className = 'pinment-mode-toggle';
-    toggleBtn.textContent = editMode ? 'Browse (Esc)' : 'Add pins (N)';
-    if (onEditModeToggle) toggleBtn.addEventListener('click', onEditModeToggle);
-    modeBar.appendChild(toggleBtn);
+    const modeBarBtns = document.createElement('div');
+    modeBarBtns.className = 'pinment-mode-bar-btns';
 
+    const visibilityBtn = document.createElement('button');
+    visibilityBtn.className = 'pinment-btn pinment-btn-icon';
+    visibilityBtn.title = 'Toggle pin visibility';
+    visibilityBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2.5"/></svg>';
+    if (onToggle) visibilityBtn.addEventListener('click', onToggle);
+    modeBarBtns.appendChild(visibilityBtn);
+
+    if (onStartNew) {
+      const startNewBtn = document.createElement('button');
+      startNewBtn.className = 'pinment-btn pinment-btn-icon';
+      startNewBtn.title = 'Start new annotation';
+      startNewBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>';
+      startNewBtn.addEventListener('click', onStartNew);
+      modeBarBtns.appendChild(startNewBtn);
+    }
+
+    const modeToggleBtn = document.createElement('button');
+    modeToggleBtn.className = 'pinment-mode-toggle';
+    modeToggleBtn.textContent = editMode ? 'Browse (Esc)' : 'Add pins (N)';
+    if (onEditModeToggle) modeToggleBtn.addEventListener('click', onEditModeToggle);
+    modeBarBtns.appendChild(modeToggleBtn);
+
+    modeBar.appendChild(modeBarBtns);
     panel.appendChild(modeBar);
   }
 
@@ -1008,13 +1055,6 @@ export function createPanel(pins, options = {}) {
   importBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M8 10V2"/><path d="M4 4l4-4 4 4"/></svg>';
   if (onImport) importBtn.addEventListener('click', onImport);
   footer.appendChild(importBtn);
-
-  const toggleBtn = document.createElement('button');
-  toggleBtn.className = 'pinment-btn pinment-btn-toggle';
-  toggleBtn.title = 'Toggle pin visibility';
-  toggleBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2.5"/></svg>';
-  if (onToggle) toggleBtn.addEventListener('click', onToggle);
-  footer.appendChild(toggleBtn);
 
   const versionEl = document.createElement('div');
   versionEl.className = 'pinment-version';
