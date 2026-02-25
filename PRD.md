@@ -17,7 +17,7 @@ Pinment is a bookmarklet-driven annotation tool backed by a static hub site host
 3. **Share** -- The bookmarklet serializes all annotations into a compressed Pinment URL; the reviewer copies and sends the link
 4. **Review** -- Recipient opens the Pinment link, which shows the annotation data and target page URL; they navigate to the page, click the bookmarklet, and the saved pins appear in place
 
-## Key design decisions
+## Design decisions
 
 | Decision | Choice | Rationale |
 |---|---|---|
@@ -29,16 +29,16 @@ Pinment is a bookmarklet-driven annotation tool backed by a static hub site host
 
 ## Functional requirements
 
-### Must have (MVP)
+### Must have (MVP) -- all complete
 
-- **FR-01** Bookmarklet activation: a single bookmarklet click injects the Pinment annotation UI into the current page
-- **FR-02** Pin placement: click anywhere on the page to place a numbered marker at that position
-- **FR-03** Comment entry: each pin has an editable text comment and an optional author name
-- **FR-04** Comment panel: an overlay panel listing all comments by pin number, injected into the page by the bookmarklet
-- **FR-05** Share URL generation: serialize all state (target page URL, viewport width, pin coordinates, comments) into a compressed URL fragment
-- **FR-06** Annotation restore: when the bookmarklet is activated on the target page and a Pinment URL is provided, reconstruct all pins in their original positions
-- **FR-07** Pin visibility toggle: show/hide all pins to see the page without annotation clutter
-- **FR-08** Hub site: a static GitHub Pages site where users can install the bookmarklet (drag to bookmarks bar), view annotation data from a share URL, and get a link to the target page
+- [x] **FR-01** Bookmarklet activation: a single bookmarklet click injects the Pinment annotation UI into the current page
+- [x] **FR-02** Pin placement: click anywhere on the page to place a numbered marker at that position
+- [x] **FR-03** Comment entry: each pin has an editable text comment and an optional author name
+- [x] **FR-04** Comment panel: an overlay panel listing all comments by pin number, injected into the page by the bookmarklet
+- [x] **FR-05** Share URL generation: serialize all state (target page URL, viewport width, pin coordinates, comments) into a compressed URL fragment
+- [x] **FR-06** Annotation restore: when the bookmarklet is activated on the target page and a Pinment URL is provided, reconstruct all pins in their original positions
+- [x] **FR-07** Pin visibility toggle: show/hide all pins to see the page without annotation clutter
+- [x] **FR-08** Hub site: a static GitHub Pages site where users can install the bookmarklet (drag to bookmarks bar), view annotation data from a share URL, and get a link to the target page
 
 ### Should have (v1.1)
 
@@ -66,10 +66,10 @@ Pinment is a bookmarklet-driven annotation tool backed by a static hub site host
 
 The URL-as-state pattern at the heart of Pinment was prompted by Ahmad El-Alfy's [Your URL is your state](https://alfy.blog/2025/10/31/your-url-is-your-state.html) and explored further in [URLs are the state management you should use](https://allaboutken.com/posts/20251226-url-state-management/).
 
-Two open-source projects prove this pattern works for substantive content, not just configuration toggles:
+Two open-source projects store full documents in the URL hash, well beyond simple config toggles:
 
-- **[Buffertab](https://github.com/AlexW00/Buffertab)** (MIT license) -- A markdown editor where the document lives entirely in the URL hash. Uses **pako** (zlib/deflate) for compression with a visual indicator showing how much URL capacity remains. Buffertab's compression approach, URL capacity management, and character-limit UX directly inform Pinment's technical decisions. As an MIT-licensed project, its implementation can be referenced and adapted.
-- **[Inkash](https://github.com/taqui-786/inkash)** (no license specified) -- Markdown editor plus freehand canvas drawing, also URL-hash-only. Adds QR code generation for sharing and export to PNG/SVG/HTML. Demonstrates that canvas-rendered content (not just text) can be compressed into a URL.
+- **[Buffertab](https://github.com/AlexW00/Buffertab)** (MIT license) -- A markdown editor where the document lives entirely in the URL hash. Uses **pako** (zlib/deflate) for compression with a visual indicator showing how much URL capacity remains. Pinment borrows its compression strategy and capacity indicator from Buffertab. As an MIT-licensed project, its implementation can be referenced and adapted.
+- **[Inkash](https://github.com/taqui-786/inkash)** (no license specified) -- Markdown editor plus freehand canvas drawing, also URL-hash-only. Adds QR code generation for sharing and export to PNG/SVG/HTML. Shows that canvas data can also fit in a URL.
 
 Pinment extends this pattern from text and drawing to spatial annotation on live webpages: instead of encoding a document, we encode a set of positioned comments anchored to coordinates on a page.
 
@@ -95,7 +95,7 @@ Pin positions are stored relative to the page so they can be reconstructed on th
 
 This approach is simple and avoids fragile DOM-selector-based targeting. The trade-off is that pins may drift if the page layout changes between annotation and review -- but that's an acceptable limitation for a review tool (if the page changed, you probably want fresh annotations anyway).
 
-## URL state schema (draft)
+## URL state schema
 
 ```json
 {
@@ -131,11 +131,17 @@ This approach is simple and avoids fragile DOM-selector-based targeting. The tra
 - A recipient with access to the target page can see pins overlaid in their original positions via the bookmarklet
 - The tool is maintainable with zero ongoing cost
 
+## Decisions made
+
+| Question | Decision | Rationale |
+|---|---|---|
+| Bookmarklet scoping strategy (Q5) | Namespaced CSS classes (`pinment-*`) | Simpler than shadow DOM; avoids event-handling trade-offs; sufficient isolation for MVP; can upgrade to shadow DOM later if needed |
+| Annotation restore trigger (Q6) | Prompt user to paste share URL | Avoids needing the share hash in the target page's URL; simpler implementation; clear user intent |
+| Build pipeline | esbuild bundles bookmarklet into `javascript:` URI; Vite plugin injects into hub site HTML | Maintainable source code with proper modules; single minified output for the bookmarklet |
+| CI/CD | GitHub Actions | Runs tests and builds on PRs; deploys to GitHub Pages on merge to main |
+| Testing | Vitest with jsdom | TDD approach; fast test execution; compatible with Vite ecosystem |
+
 ## Open questions
 
-1. Should we use the UNDRR GitHub org or a personal repo for hosting?
-2. Is there appetite to add this to the team's standard review workflow, or is it a supplementary tool?
-3. Should we explore the W3C Web Annotation Data Model for the schema to align with Hypothesis and other tools?
-4. Worth integrating with Teams (e.g. a Teams tab or bot that generates the link)?
-5. Exact bookmarklet scoping strategy: shadow DOM for the injected UI, or namespaced classes? Shadow DOM provides better isolation but has trade-offs with event handling.
-6. Should the bookmarklet auto-detect a Pinment hash in the page URL, or require the user to paste the share URL into a prompt?
+1. Should we explore the W3C Web Annotation Data Model for the schema to align with Hypothesis and other tools?
+2. Worth integrating with Teams (e.g. a Teams tab or bot that generates the link)?

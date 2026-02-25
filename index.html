@@ -5,22 +5,85 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pinment — Pin comments to any webpage</title>
   <meta name="description" content="Pin comments to a live webpage and share the annotations as a single URL. No backend, no accounts, no database.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div id="app">
     <header>
       <h1 class="logo">Pinment</h1>
-      <p class="tagline">Pin comments to any webpage. Share via URL.</p>
+      <p class="tagline">Pin comments to any webpage. Share the annotations as a single URL.</p>
+      <p class="tagline-punch">No backend. No accounts. The URL <em>is</em> the review.</p>
     </header>
 
     <main>
-      <!-- Bookmarklet install -->
+      <!-- Onboarding + bookmarklet install -->
       <section id="install">
-        <h2>Get the bookmarklet</h2>
-        <p>Drag this button to your bookmarks bar:</p>
-        <a id="bookmarklet" class="bookmarklet-btn" href="javascript:void(0);">Pinment</a>
-        <p class="hint">Then click it on any page you want to annotate.</p>
+        <ol class="steps">
+
+          <li class="step step-featured">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h2>Add the bookmarklet</h2>
+              <p>Drag this button to your bookmarks bar:</p>
+
+              <div class="bookmarklet-area">
+                <div class="drag-hint" aria-hidden="true">
+                  <svg class="drag-arrow" width="24" height="48" viewBox="0 0 24 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 48 L12 8" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M4 16 L12 4 L20 16" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                  </svg>
+                  <span class="drag-label">Drag to bookmarks bar</span>
+                </div>
+                <a id="bookmarklet" class="bookmarklet-btn" href="javascript:void(0);">
+                  <svg class="bookmarklet-icon" width="14" height="18" viewBox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M7 0C3.7 0 1 2.7 1 6c0 4.6 6 11 6 11s6-6.4 6-11C13 2.7 10.3 0 7 0z" fill="currentColor"/>
+                    <circle cx="7" cy="6" r="2.5" fill="#fff" opacity="0.9"/>
+                  </svg>
+                  Pinment
+                </a>
+              </div>
+
+              <details class="bookmarks-help">
+                <summary>Can't see your bookmarks bar?</summary>
+                <div class="bookmarks-help-body">
+                  <p>Show it with a keyboard shortcut:</p>
+                  <table class="shortcut-table">
+                    <tr><td>Chrome / Edge</td><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></td></tr>
+                    <tr><td>Firefox</td><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></td></tr>
+                    <tr><td>Mac (all browsers)</td><td><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></td></tr>
+                  </table>
+                  <p>Or: right-click the bookmarklet button above, choose <strong>Bookmark This Link</strong>, and save it to your bookmarks bar.</p>
+                </div>
+              </details>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h2>Navigate to any page</h2>
+              <p>Go to the page you want to review &mdash; published, staging, localhost, or behind auth. If you can see it, you can annotate it.</p>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h2>Drop pins &amp; comment</h2>
+              <p>Click the bookmarklet, then click anywhere on the page to place a numbered pin. Add your comment and name in the panel that appears.</p>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <h2>Share the URL</h2>
+              <p>Hit <strong>Share</strong> to copy a link. Your colleague opens it, visits the page, clicks the bookmarklet, and sees your pins right where you left them.</p>
+            </div>
+          </li>
+
+        </ol>
       </section>
 
       <!-- Shared annotation viewer -->
