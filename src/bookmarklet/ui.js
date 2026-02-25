@@ -8,6 +8,8 @@
 import { generateSelector } from '../selector.js';
 import { VERSION, RELEASE_DATE } from '../version.js';
 
+const LOGO_SVG = '<svg width="18" height="18" viewBox="0 0 32 32" fill="none" aria-hidden="true" style="vertical-align:-3px;margin-right:4px"><path d="M16 1C9.9 1 5 5.9 5 12c0 8.4 11 19 11 19s11-10.6 11-19C27 5.9 22.1 1 16 1z" fill="#ef4444"/><circle cx="16" cy="12" r="4.5" fill="#fff"/></svg>';
+
 export function buildStyles() {
   return `
 .pinment-pin {
@@ -863,7 +865,7 @@ export function createPanel(pins, options = {}) {
   // Header
   const header = document.createElement('div');
   header.className = 'pinment-panel-header';
-  header.innerHTML = `<span>Pinment</span>`;
+  header.innerHTML = `<span>${LOGO_SVG}Pinment</span>`;
 
   const headerBtns = document.createElement('div');
   headerBtns.className = 'pinment-panel-header-btns';
@@ -1307,7 +1309,7 @@ export function createWelcomeModal(validateUrl, validateImport) {
 
   const title = document.createElement('h2');
   title.className = 'pinment-modal-title';
-  title.textContent = 'Pinment';
+  title.innerHTML = LOGO_SVG + 'Pinment';
   headerLeft.appendChild(title);
 
   const link = document.createElement('a');
@@ -1529,7 +1531,7 @@ export function createDocsSiteModal() {
 
   const title = document.createElement('h2');
   title.className = 'pinment-modal-title';
-  title.textContent = 'Pinment';
+  title.innerHTML = LOGO_SVG + 'Pinment';
   headerLeft.appendChild(title);
   header.appendChild(headerLeft);
 
@@ -1625,7 +1627,7 @@ export function createExitConfirmModal({ onCopyAndExit, onExitWithout, onCancel 
   header.className = 'pinment-modal-header';
   const title = document.createElement('h2');
   title.className = 'pinment-modal-title';
-  title.textContent = 'Exit Pinment?';
+  title.innerHTML = LOGO_SVG + 'Exit Pinment?';
   header.appendChild(title);
   modal.appendChild(header);
 
