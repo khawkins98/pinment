@@ -404,6 +404,126 @@ describe('createPanel', () => {
     panel.querySelector('.pinment-btn-export').click();
     expect(onExport).toHaveBeenCalledOnce();
   });
+
+  it('renders import button', () => {
+    const panel = createPanel([]);
+    const importBtn = panel.querySelector('.pinment-btn-import');
+    expect(importBtn).not.toBeNull();
+  });
+
+  it('invokes onImport when import button is clicked', () => {
+    const onImport = vi.fn();
+    const panel = createPanel([], { onImport });
+    panel.querySelector('.pinment-btn-import').click();
+    expect(onImport).toHaveBeenCalledOnce();
+  });
+
+  it('renders reply button in editable mode', () => {
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '' }];
+    const panel = createPanel(pins, { editable: true });
+    const replyBtn = panel.querySelector('.pinment-btn-reply');
+    expect(replyBtn).not.toBeNull();
+    expect(replyBtn.textContent).toBe('Reply');
+  });
+
+  it('does not render reply button in read-only mode', () => {
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '' }];
+    const panel = createPanel(pins, { editable: false });
+    expect(panel.querySelector('.pinment-btn-reply')).toBeNull();
+  });
+
+  it('shows reply form when reply button is clicked', () => {
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '' }];
+    const panel = createPanel(pins, { editable: true });
+    panel.querySelector('.pinment-btn-reply').click();
+    expect(panel.querySelector('.pinment-reply-form')).not.toBeNull();
+    expect(panel.querySelector('.pinment-reply-input')).not.toBeNull();
+    expect(panel.querySelector('.pinment-btn-add-reply')).not.toBeNull();
+    expect(panel.querySelector('.pinment-btn-cancel-reply')).not.toBeNull();
+  });
+
+  it('toggles reply form on repeated clicks', () => {
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '' }];
+    const panel = createPanel(pins, { editable: true });
+    const replyBtn = panel.querySelector('.pinment-btn-reply');
+    replyBtn.click();
+    expect(panel.querySelector('.pinment-reply-form')).not.toBeNull();
+    replyBtn.click();
+    expect(panel.querySelector('.pinment-reply-form')).toBeNull();
+  });
+
+  it('removes reply form when cancel is clicked', () => {
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '' }];
+    const panel = createPanel(pins, { editable: true });
+    panel.querySelector('.pinment-btn-reply').click();
+    panel.querySelector('.pinment-btn-cancel-reply').click();
+    expect(panel.querySelector('.pinment-reply-form')).toBeNull();
+  });
+
+  it('invokes onReply with pin id, text, and author when add reply is clicked', () => {
+    const onReply = vi.fn();
+    const pins = [{ id: 5, x: 0.5, y: 100, author: 'FL', text: 'test' }];
+    const panel = createPanel(pins, { editable: true, onReply });
+    panel.querySelector('.pinment-btn-reply').click();
+    const replyInput = panel.querySelector('.pinment-reply-input');
+    replyInput.value = 'My reply';
+    const authorInput = panel.querySelector('.pinment-reply-form .pinment-author-input');
+    authorInput.value = 'KH';
+    panel.querySelector('.pinment-btn-add-reply').click();
+    expect(onReply).toHaveBeenCalledWith(5, 'My reply', 'KH');
+  });
+
+  it('does not invoke onReply when reply text is empty', () => {
+    const onReply = vi.fn();
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '' }];
+    const panel = createPanel(pins, { editable: true, onReply });
+    panel.querySelector('.pinment-btn-reply').click();
+    panel.querySelector('.pinment-btn-add-reply').click();
+    expect(onReply).not.toHaveBeenCalled();
+  });
+
+  it('renders existing replies in editable mode', () => {
+    const pins = [{
+      id: 1, x: 0.5, y: 100, author: 'FL', text: 'test',
+      replies: [{ author: 'KH', text: 'Fixed it' }],
+    }];
+    const panel = createPanel(pins, { editable: true });
+    const replies = panel.querySelector('.pinment-replies');
+    expect(replies).not.toBeNull();
+    expect(replies.textContent).toContain('KH');
+    expect(replies.textContent).toContain('Fixed it');
+  });
+
+  it('renders existing replies in read-only mode', () => {
+    const pins = [{
+      id: 1, x: 0.5, y: 100, author: 'FL', text: 'test',
+      replies: [{ author: 'KH', text: 'Confirmed' }],
+    }];
+    const panel = createPanel(pins, { editable: false });
+    const replies = panel.querySelector('.pinment-replies');
+    expect(replies).not.toBeNull();
+    expect(replies.textContent).toContain('KH');
+    expect(replies.textContent).toContain('Confirmed');
+  });
+
+  it('does not render replies section when no replies exist', () => {
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '' }];
+    const panel = createPanel(pins, { editable: true });
+    expect(panel.querySelector('.pinment-replies')).toBeNull();
+  });
+
+  it('renders multiple replies', () => {
+    const pins = [{
+      id: 1, x: 0.5, y: 100, author: 'FL', text: 'test',
+      replies: [
+        { author: 'KH', text: 'First reply' },
+        { author: 'FL', text: 'Second reply' },
+      ],
+    }];
+    const panel = createPanel(pins, { editable: true });
+    const replyItems = panel.querySelectorAll('.pinment-reply');
+    expect(replyItems.length).toBe(2);
+  });
 });
 
 describe('restorePins', () => {
@@ -567,6 +687,22 @@ describe('createDocsSiteModal', () => {
     modal.querySelector('.pinment-modal-close').click();
     const result = await promise;
     expect(result).toBe(false);
+  });
+});
+
+describe('createWelcomeModal import', () => {
+  it('contains an import button', () => {
+    const { modal } = createWelcomeModal();
+    const buttons = modal.querySelectorAll('.pinment-modal-btn-secondary');
+    const importBtn = Array.from(buttons).find(b => b.textContent.includes('JSON'));
+    expect(importBtn).not.toBeNull();
+  });
+
+  it('contains an import label', () => {
+    const { modal } = createWelcomeModal();
+    const labels = modal.querySelectorAll('.pinment-modal-label');
+    const importLabel = Array.from(labels).find(l => l.textContent.includes('Import'));
+    expect(importLabel).not.toBeNull();
   });
 });
 

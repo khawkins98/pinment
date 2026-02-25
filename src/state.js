@@ -72,6 +72,14 @@ export function validateState(state) {
     if (pin.author !== undefined && typeof pin.author !== 'string') return null;
     if (pin.c !== undefined && !PIN_CATEGORIES.includes(pin.c)) return null;
     if (pin.resolved !== undefined && typeof pin.resolved !== 'boolean') return null;
+    if (pin.replies !== undefined) {
+      if (!Array.isArray(pin.replies)) return null;
+      for (const reply of pin.replies) {
+        if (typeof reply !== 'object' || reply === null) return null;
+        if (typeof reply.text !== 'string') return null;
+        if (reply.author !== undefined && typeof reply.author !== 'string') return null;
+      }
+    }
   }
 
   return state;
@@ -84,4 +92,13 @@ export function estimateUrlSize(state, baseUrl = DEFAULT_BASE_URL) {
 
 export function exportStateAsJson(state) {
   return JSON.stringify(state, null, 2);
+}
+
+export function importStateFromJson(jsonString) {
+  try {
+    const state = JSON.parse(jsonString);
+    return validateState(state);
+  } catch {
+    return null;
+  }
 }
