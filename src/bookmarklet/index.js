@@ -6,7 +6,7 @@
  * All DOM elements use the pinment- class namespace to avoid conflicts.
  */
 import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal, createMinimizedButton, createExitConfirmModal, repositionPin, highlightPinTarget, clearPinHighlight } from './ui.js';
-import { compress, parseShareUrl, validateState, createShareUrl, estimateUrlSize, exportStateAsJson, importStateFromJson, SCHEMA_VERSION, MAX_URL_BYTES } from '../state.js';
+import { compress, decompress, parseShareUrl, validateState, createShareUrl, estimateUrlSize, exportStateAsJson, importStateFromJson, SCHEMA_VERSION, MAX_URL_BYTES } from '../state.js';
 import { detectEnv } from '../selector.js';
 const STORAGE_KEY_AUTHOR = 'pinment-author';
 const PANEL_ID = 'pinment-panel';
@@ -84,6 +84,36 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     // localStorage may not be available
   }
 
+  function startSession(loaded) {
+    if (loaded) {
+      loadState(loaded);
+    }
+
+    // Warn before navigating away with unsaved pins
+    window.addEventListener('beforeunload', onBeforeUnload);
+
+    // Enable keyboard shortcuts
+    document.addEventListener('keydown', onKeyDown);
+
+    // Build panel and enable pin mode
+    renderPanel();
+    enablePinMode();
+  }
+
+  // Check for #pinment= fragment embedded in the target page URL.
+  // The hub site appends this when opening the target page so the
+  // bookmarklet can auto-load annotations without clipboard access.
+  const hash = window.location.hash;
+  if (hash.startsWith('#pinment=')) {
+    const compressed = hash.slice(9);
+    const raw = decompress(compressed);
+    const loaded = raw ? validateState(raw) : null;
+    if (loaded) {
+      startSession(loaded);
+      return;
+    }
+  }
+
   // Show welcome modal for restoring annotations or starting fresh
   const { modal, promise } = createWelcomeModal(parseShareUrl, validateState);
   document.body.appendChild(modal);
@@ -105,19 +135,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       loaded = validateState(result);
     }
 
-    if (loaded) {
-      loadState(loaded);
-    }
-
-    // Warn before navigating away with unsaved pins
-    window.addEventListener('beforeunload', onBeforeUnload);
-
-    // Enable keyboard shortcuts
-    document.addEventListener('keydown', onKeyDown);
-
-    // Build panel and enable pin mode after modal resolves
-    renderPanel();
-    enablePinMode();
+    startSession(loaded);
   });
 
   function onBeforeUnload(e) {
@@ -299,6 +317,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       onExport: handleExport,
       onReply: handleReply,
       onImport: handleImport,
+      onStartNew: handleStartNew,
       filters: state.filters,
       onFilterChange: handleFilterChange,
       onPinHover: handlePinHover,
@@ -408,6 +427,16 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       reader.readAsText(file);
     });
     fileInput.click();
+  }
+
+  function handleStartNew() {
+    if (state.pins.length > 0 && !confirm('This will clear all current annotations. Continue?')) {
+      return;
+    }
+    state.pins = [];
+    state.nextId = 1;
+    pinContainer.innerHTML = '';
+    renderPanel();
   }
 
   function handleExport() {

@@ -258,14 +258,13 @@ describe('renderViewer', () => {
     expect(exportBtn).not.toBeNull();
   });
 
-  it('renders "Open target page" link pointing to state url', () => {
+  it('renders "Open target page" button that opens guidance modal', () => {
     const state = createState('https://staging.example.com/about', 1440, []);
     renderViewer(state);
-    const link = document.querySelector('.viewer-btn-primary');
-    expect(link).not.toBeNull();
-    expect(link.href).toBe('https://staging.example.com/about');
-    expect(link.target).toBe('_blank');
-    expect(link.textContent).toContain('Open target page');
+    const btn = document.querySelector('.viewer-btn-primary');
+    expect(btn).not.toBeNull();
+    expect(btn.tagName).toBe('BUTTON');
+    expect(btn.textContent).toContain('Open target page');
   });
 
   it('renders "Copy share URL" button', () => {

@@ -6,7 +6,7 @@
  * 2. If the URL contains a #data= fragment, decodes and displays the annotation
  *    data so the user can see the review even without visiting the target page
  */
-import { decompress, validateState, exportStateAsJson, importStateFromJson } from '../src/state.js';
+import { compress, decompress, validateState, exportStateAsJson, importStateFromJson } from '../src/state.js';
 
 export function parseHashData(hash) {
   if (!hash || !hash.startsWith('#data=')) return null;
@@ -82,13 +82,13 @@ export function renderViewer(state) {
   const actions = document.createElement('div');
   actions.className = 'viewer-actions';
 
-  const openLink = document.createElement('a');
-  openLink.href = state.url;
-  openLink.target = '_blank';
-  openLink.rel = 'noopener';
-  openLink.className = 'viewer-btn viewer-btn-primary';
-  openLink.textContent = 'Open target page';
-  actions.appendChild(openLink);
+  const openBtn = document.createElement('button');
+  openBtn.className = 'viewer-btn viewer-btn-primary';
+  openBtn.textContent = 'Open target page';
+  openBtn.addEventListener('click', () => {
+    showOpenTargetModal(state.url, state);
+  });
+  actions.appendChild(openBtn);
 
   const copyBtn = document.createElement('button');
   copyBtn.className = 'viewer-btn viewer-btn-secondary';
@@ -237,6 +237,98 @@ export function renderError(message) {
   meta.appendChild(errorP);
 
   pinsList.innerHTML = '';
+}
+
+function showOpenTargetModal(targetUrl, state) {
+  // Copy share URL to clipboard so bookmarklet can auto-detect it
+  const shareUrl = window.location.href;
+  const clipboardOk = navigator.clipboard && navigator.clipboard.writeText;
+  if (clipboardOk) {
+    navigator.clipboard.writeText(shareUrl).catch(() => {});
+  }
+
+  // Embed compressed annotations in the target URL fragment so the
+  // bookmarklet can auto-load them even if clipboard access fails.
+  const compressed = compress(state);
+  const targetWithData = targetUrl.split('#')[0] + '#pinment=' + compressed;
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'guidance-backdrop';
+
+  const modal = document.createElement('div');
+  modal.className = 'guidance-modal';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'guidance-close';
+  closeBtn.textContent = '\u00d7';
+  closeBtn.title = 'Close';
+  closeBtn.addEventListener('click', () => backdrop.remove());
+  modal.appendChild(closeBtn);
+
+  const heading = document.createElement('h3');
+  heading.textContent = 'Before you go\u2026';
+  modal.appendChild(heading);
+
+  // Step 1: bookmarklet install check
+  const step1 = document.createElement('div');
+  step1.className = 'guidance-step';
+  const step1Num = document.createElement('span');
+  step1Num.className = 'guidance-step-num';
+  step1Num.textContent = '1';
+  const step1Text = document.createElement('div');
+  step1Text.className = 'guidance-step-body';
+  const bookmarkletLink = document.getElementById('bookmarklet');
+  if (bookmarkletLink) {
+    const installP = document.createElement('p');
+    installP.innerHTML = '<strong>Make sure Pinment is in your bookmarks bar.</strong> If not, drag this button up there now:';
+    step1Text.appendChild(installP);
+    const btnClone = bookmarkletLink.cloneNode(true);
+    btnClone.className = 'bookmarklet-btn bookmarklet-btn-sm';
+    step1Text.appendChild(btnClone);
+  } else {
+    const installP = document.createElement('p');
+    installP.innerHTML = '<strong>Make sure the Pinment bookmarklet is in your bookmarks bar.</strong>';
+    step1Text.appendChild(installP);
+  }
+  step1.appendChild(step1Num);
+  step1.appendChild(step1Text);
+  modal.appendChild(step1);
+
+  // Step 2: click bookmarklet on arrival
+  const step2 = document.createElement('div');
+  step2.className = 'guidance-step';
+  const step2Num = document.createElement('span');
+  step2Num.className = 'guidance-step-num';
+  step2Num.textContent = '2';
+  const step2Text = document.createElement('div');
+  step2Text.className = 'guidance-step-body';
+  const step2P = document.createElement('p');
+  step2P.innerHTML = '<strong>On the target page, click Pinment</strong> in your bookmarks bar. The annotations will load automatically.';
+  step2Text.appendChild(step2P);
+  step2.appendChild(step2Num);
+  step2.appendChild(step2Text);
+  modal.appendChild(step2);
+
+  // Action
+  const actionArea = document.createElement('div');
+  actionArea.className = 'guidance-actions';
+  const goLink = document.createElement('a');
+  goLink.href = targetWithData;
+  goLink.target = '_blank';
+  goLink.rel = 'noopener';
+  goLink.className = 'viewer-btn viewer-btn-primary';
+  goLink.textContent = 'Open page \u2192';
+  goLink.addEventListener('click', () => {
+    setTimeout(() => backdrop.remove(), 300);
+  });
+  actionArea.appendChild(goLink);
+  modal.appendChild(actionArea);
+
+  backdrop.appendChild(modal);
+  backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) backdrop.remove();
+  });
+  document.body.appendChild(backdrop);
 }
 
 export function init() {
