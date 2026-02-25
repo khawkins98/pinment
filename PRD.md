@@ -21,7 +21,7 @@ Pinment is a bookmarklet-driven annotation tool backed by a static hub site host
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Coordinates on live page vs. screenshot | Live page coordinates | Eliminates manual screenshot step; pins are placed in real spatial context; viewport width is stored so reviewer context is preserved |
+| Element-anchored pins vs. pixel coordinates | DOM element selectors + offset ratios | Resilient to viewport changes and responsive layouts; pins stay on the correct element regardless of window size; fallback pixel coordinates stored for robustness |
 | Injection method | Bookmarklet | Works on any page the user can already see (localhost, staging, authenticated pages); no extension store approval; no CORS issues since JS runs in the page's own context |
 | Storage | URL hash (compressed) | Zero infrastructure; shareable via any channel (Teams, email, chat) |
 | Hosting (hub site) | GitHub Pages | Free, no server to maintain |
@@ -44,10 +44,10 @@ Pinment is a bookmarklet-driven annotation tool backed by a static hub site host
 
 ### Should have (v1.1)
 
-- **FR-11** Pin categories: label pins by type (text issue, layout issue, missing content, question)
-- **FR-12** Pin status: mark individual comments as resolved/open
-- **FR-13** Export: download annotations as a JSON file for archival or import
-- **FR-14** Multiple viewports: store annotations per viewport width so desktop and mobile reviews stay separate
+- [x] **FR-11** Pin categories: label pins by type (text issue, layout issue, missing content, question)
+- [x] **FR-12** Pin status: mark individual comments as resolved/open
+- [x] **FR-13** Export: download annotations as a JSON file for archival or import
+- ~~**FR-14** Multiple viewports: store annotations per viewport width so desktop and mobile reviews stay separate~~ — Addressed by element-based anchoring (pins stay on their target element across viewport sizes) and browser/device metadata (recipients see the original reviewer's viewport context)
 
 ### Could have (future)
 
@@ -73,9 +73,12 @@ Two open-source projects store full documents in the URL hash, well beyond simpl
 - **[Buffertab](https://github.com/AlexW00/Buffertab)** (MIT license) -- A markdown editor where the document lives entirely in the URL hash. Uses **pako** (zlib/deflate) for compression with a visual indicator showing how much URL capacity remains. Pinment borrows its compression strategy and capacity indicator from Buffertab. As an MIT-licensed project, its implementation can be referenced and adapted.
 - **[Inkash](https://github.com/taqui-786/inkash)** (no license specified) -- Markdown editor plus freehand canvas drawing, also URL-hash-only. Adds QR code generation for sharing and export to PNG/SVG/HTML. Shows that canvas data can also fit in a URL.
 
-Pinment extends this pattern from text and drawing to spatial annotation on live webpages: instead of encoding a document, we encode a set of positioned comments anchored to coordinates on a page.
+Pinment extends this pattern from text and drawing to spatial annotation on live webpages: instead of encoding a document, we encode a set of positioned comments anchored to DOM elements on a page.
 
-The final product should include a visible acknowledgement of these projects and the URL-as-state concept (e.g. an "about" section or footer linking to Buffertab, Inkash, and the original blog posts).
+The element-based anchoring approach draws on techniques from:
+
+- **[Hypothesis](https://web.hypothes.is/)** -- An open-source web annotation tool that pioneered element-anchored annotations on arbitrary webpages. Hypothesis uses XPath and text-based anchoring; Pinment uses CSS selectors with offset ratios for a more compact URL representation.
+- **Browser DevTools** -- Chrome, Firefox, and Edge all implement CSS selector generation (used in "Copy selector") with similar strategies of preferring IDs and stable attributes over positional selectors.
 
 ## Technical approach
 
@@ -87,34 +90,51 @@ The final product should include a visible acknowledgement of these projects and
 - **Local development:** Node.js with package.json for dependency management; Vite as the dev server and build tool; Vitest (or similar) for unit and integration testing
 - **Bookmarklet build:** The bookmarklet source lives in the repo as a standard JS module; a build step bundles and minifies it into the `javascript:` URI format for installation
 
-## Coordinate system
+## Pin anchoring system
 
-Pin positions are stored relative to the page so they can be reconstructed on the same page at any viewport size:
+Pins are anchored to DOM elements rather than raw pixel coordinates. When a user clicks to place a pin, Pinment:
 
-- **x** -- ratio (0--1) relative to the viewport width at time of annotation
-- **y** -- pixel offset from the top of the document (absolute, not relative to viewport height, since pages scroll)
-- **viewport** -- the viewport width in pixels when the annotation was created, so the recipient knows the context and pins can be scaled or flagged if the viewport differs significantly
+1. Uses `elementFromPoint` (with the click overlay temporarily hidden via `pointer-events: none`) to identify the DOM element under the click
+2. Generates a stable CSS selector for that element, preferring stable identifiers: `id` > `data-testid` > semantic class names > `nth-of-type`
+3. Stores the click position as offset ratios (0--1) within the element's bounding box
+4. Also stores absolute pixel coordinates as a fallback
 
-This approach is simple and avoids fragile DOM-selector-based targeting. The trade-off is that pins may drift if the page layout changes between annotation and review -- but that's an acceptable limitation for a review tool (if the page changed, you probably want fresh annotations anyway).
+On restore, Pinment finds the element by its CSS selector and computes the pin position from the element's current bounding rect + stored offset ratios. This means pins stay in place across different viewport sizes and responsive layouts.
 
-## URL state schema
+Shared annotations also include compact browser/device metadata so recipients see the reviewer's browser, viewport dimensions, and device type.
+
+This approach draws on techniques used by [Hypothesis](https://web.hypothes.is/) (open-source web annotation tool that pioneered element-anchored web annotations) and browser DevTools CSS selector generation. The selector algorithm filters out framework-generated class names (CSS-in-JS hashes, state classes) and unstable IDs (hex hashes, pure numbers) to produce selectors that are stable across page loads.
+
+## URL state schema (v2)
 
 ```json
 {
-  "v": 1,
+  "v": 2,
   "url": "https://staging.example.com/about",
   "viewport": 1440,
+  "env": {
+    "ua": "C/130",
+    "vp": [1440, 900],
+    "dt": "d"
+  },
   "pins": [
     {
       "id": 1,
-      "x": 0.45,
-      "y": 832,
+      "s": "#main-content>article>h2:nth-of-type(1)",
+      "ox": 0.45,
+      "oy": 0.3,
+      "fx": 648,
+      "fy": 832,
       "author": "FL",
-      "text": "This heading doesn't match the agreed title"
+      "text": "This heading doesn't match the agreed title",
+      "c": "text",
+      "resolved": false
     }
   ]
 }
 ```
+
+Pin fields `c` (category) and `resolved` (status) are optional. Valid categories: `text`, `layout`, `missing`, `question`. When `resolved` is `true`, the pin is visually marked as resolved in both the bookmarklet panel and the hub site viewer.
 
 ## Risks and mitigations
 
@@ -122,7 +142,7 @@ This approach is simple and avoids fragile DOM-selector-based targeting. The tra
 |---|---|---|
 | URL length limits in older browsers/tools | Annotations truncated or link fails | Compress aggressively; capacity indicator warns as usage grows; Share button disabled when over ~8KB limit with clear messaging; offer fallback export as JSON file (v1.1) |
 | Bookmarklet blocked by CSP | Bookmarklet won't inject on pages with strict Content Security Policy | Document the limitation; most internal/staging sites have relaxed CSP; provide fallback instructions for adding Pinment as a local dev tool |
-| Page layout changes between annotation and review | Pins drift from their intended positions | Store viewport width; warn if recipient's viewport differs significantly; accept as a known limitation (changed page = fresh review) |
+| Page layout changes between annotation and review | Pins drift from their intended positions | Pins are anchored to DOM elements via CSS selectors, making them resilient to viewport changes and responsive layouts; fallback pixel coordinates used when element can't be found; browser/device metadata shown so reviewer context is clear |
 | No real-time collaboration | Users can't annotate simultaneously | Out of scope for MVP; share sequential URLs via chat |
 | Recipient needs access to the target page | Can't view pins if page is behind auth or offline | Hub site shows annotations as a text list with coordinates, plus "Open target page" and "Copy share URL" buttons; bookmarklet overlay is the enhanced experience, not the only one |
 

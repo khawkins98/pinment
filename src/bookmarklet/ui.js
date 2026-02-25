@@ -5,6 +5,7 @@
  * and calculating pin positions. All CSS classes use the
  * pinment- namespace to avoid conflicts with host pages.
  */
+import { generateSelector } from '../selector.js';
 
 export function buildStyles() {
   return `
@@ -161,8 +162,6 @@ export function buildStyles() {
 .pinment-btn-share:hover {
   background: #2b6cb0;
 }
-.pinment-btn-toggle {}
-.pinment-btn-close {}
 .pinment-btn-delete {
   color: #e53e3e;
   border-color: #fed7d7;
@@ -415,28 +414,295 @@ export function buildStyles() {
   margin-top: 20px;
   width: 100%;
 }
+.pinment-modal-btn-start {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  background: #3182ce;
+  color: #fff;
+  border-color: #3182ce;
+  width: 100%;
+  padding: 10px 16px;
+}
+.pinment-modal-btn-start:hover {
+  background: #2b6cb0;
+  border-color: #2b6cb0;
+}
+.pinment-panel-header-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pinment-btn-minimize {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #718096;
+  transition: background 0.15s, color 0.15s;
+}
+.pinment-btn-minimize:hover {
+  background: #edf2f7;
+  color: #4a5568;
+}
+.pinment-btn-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #718096;
+  transition: background 0.15s, color 0.15s;
+}
+.pinment-btn-close:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+.pinment-minimized-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  cursor: pointer;
+  font: 600 13px/1 system-ui, -apple-system, sans-serif;
+  color: #2d3748;
+  z-index: 2147483641;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.pinment-minimized-btn:hover {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  transform: translateY(-1px);
+}
+.pinment-modal-btn-danger {
+  background: #fff;
+  color: #dc2626;
+  border: 1.5px solid #dc2626;
+  width: 100%;
+}
+.pinment-modal-btn-danger:hover {
+  background: #fef2f2;
+}
+.pinment-exit-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+.pinment-pin-fallback {
+  opacity: 0.75;
+  border-color: #fbbf24;
+}
+.pinment-pin-fallback::after {
+  content: '!';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f59e0b;
+  color: #fff;
+  font-size: 9px;
+  line-height: 14px;
+  text-align: center;
+  font-weight: bold;
+}
+.pinment-env-banner {
+  padding: 8px 16px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 12px;
+  border-bottom: 1px solid #bfdbfe;
+  flex-shrink: 0;
+}
+.pinment-category-select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 13px;
+  margin-top: 4px;
+  box-sizing: border-box;
+  background: #fff;
+  color: #2d3748;
+}
+.pinment-category-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+.pinment-category-text { background: #dbeafe; color: #1e40af; }
+.pinment-category-layout { background: #ede9fe; color: #5b21b6; }
+.pinment-category-missing { background: #ffedd5; color: #9a3412; }
+.pinment-category-question { background: #d1fae5; color: #065f46; }
+.pinment-btn-resolve {
+  font-size: 12px;
+  padding: 3px 8px;
+}
+.pinment-btn-resolve-open {
+  color: #38a169;
+  border-color: #c6f6d5;
+}
+.pinment-btn-resolve-resolved {
+  background: #f0fff4;
+  color: #276749;
+  border-color: #9ae6b4;
+}
+.pinment-comment-resolved {
+  opacity: 0.6;
+}
+.pinment-comment-resolved .pinment-comment-text {
+  text-decoration: line-through;
+}
+.pinment-pin-resolved {
+  opacity: 0.5;
+  background: #a0aec0;
+}
+.pinment-btn-export {
+  font-size: 12px;
+  padding: 6px 10px;
+}
+.pinment-btn-share {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  flex: 1;
+}
+.pinment-btn-toggle {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: #718096;
+  flex-shrink: 0;
+}
+.pinment-btn-toggle:hover {
+  color: #4a5568;
+}
 `;
 }
 
-export function calculatePinPosition(pageX, pageY, viewportWidth) {
-  if (viewportWidth <= 0) return { x: 0, y: pageY };
-  const x = Math.max(0, Math.min(1, pageX / viewportWidth));
-  return { x, y: pageY };
+/**
+ * Identifies the DOM element under the click, generates a CSS selector,
+ * and computes offset ratios within the element's bounding box.
+ *
+ * @param {number} clientX - viewport-relative X from the click event
+ * @param {number} clientY - viewport-relative Y from the click event
+ * @param {HTMLElement|null} overlay - the click overlay to temporarily hide
+ * @param {HTMLElement|null} pinContainer - the pin container to temporarily hide
+ * @returns {{ s: string|null, ox: number|null, oy: number|null, fx: number, fy: number }}
+ */
+export function calculatePinPosition(clientX, clientY, overlay, pinContainer) {
+  // Temporarily hide Pinment elements from hit testing
+  if (overlay) overlay.style.pointerEvents = 'none';
+  if (pinContainer) pinContainer.style.display = 'none';
+
+  const targetEl = document.elementFromPoint(clientX, clientY);
+
+  // Restore
+  if (overlay) overlay.style.pointerEvents = '';
+  if (pinContainer) pinContainer.style.display = '';
+
+  const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+  const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+  const pageX = clientX + scrollX;
+  const pageY = clientY + scrollY;
+
+  if (!targetEl || targetEl === document.body || targetEl === document.documentElement) {
+    return { s: null, ox: null, oy: null, fx: Math.round(pageX), fy: Math.round(pageY) };
+  }
+
+  const selector = generateSelector(targetEl);
+  const rect = targetEl.getBoundingClientRect();
+
+  const ox = rect.width > 0 ? Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) : 0.5;
+  const oy = rect.height > 0 ? Math.max(0, Math.min(1, (clientY - rect.top) / rect.height)) : 0.5;
+
+  return {
+    s: selector,
+    ox: Math.round(ox * 1000) / 1000,
+    oy: Math.round(oy * 1000) / 1000,
+    fx: Math.round(pageX),
+    fy: Math.round(pageY),
+  };
 }
 
-export function createPinElement(pin, currentViewportWidth) {
+/**
+ * Creates a pin element positioned by element-based anchoring with pixel fallback.
+ *
+ * @param {object} pin - v2 pin object with s, ox, oy, fx, fy
+ * @returns {HTMLElement}
+ */
+export function createPinElement(pin) {
   const el = document.createElement('div');
   el.className = 'pinment-pin';
   el.dataset.pinmentId = pin.id;
   el.textContent = String(pin.id);
   el.style.position = 'absolute';
-  el.style.left = `${pin.x * currentViewportWidth}px`;
-  el.style.top = `${pin.y}px`;
+
+  let positioned = false;
+
+  if (pin.s) {
+    try {
+      const target = document.querySelector(pin.s);
+      if (target) {
+        const rect = target.getBoundingClientRect();
+        const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+        el.style.left = `${rect.left + scrollX + (pin.ox != null ? pin.ox : 0.5) * rect.width}px`;
+        el.style.top = `${rect.top + scrollY + (pin.oy != null ? pin.oy : 0.5) * rect.height}px`;
+        positioned = true;
+      }
+    } catch {
+      // Invalid selector, fall through to fallback
+    }
+  }
+
+  if (!positioned) {
+    el.style.left = `${pin.fx}px`;
+    el.style.top = `${pin.fy}px`;
+    if (pin.s) {
+      // Had a selector but couldn't resolve it — mark as fallback
+      el.classList.add('pinment-pin-fallback');
+    }
+  }
+
+  if (pin.resolved) {
+    el.classList.add('pinment-pin-resolved');
+  }
+
   return el;
 }
 
 export function createPanel(pins, options = {}) {
-  const { editable = false, onShare, onToggle, onClose, onSave, onDelete } = options;
+  const { editable = false, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport } = options;
 
   const panel = document.createElement('div');
   panel.className = 'pinment-panel';
@@ -445,12 +711,26 @@ export function createPanel(pins, options = {}) {
   const header = document.createElement('div');
   header.className = 'pinment-panel-header';
   header.innerHTML = `<span>Pinment</span>`;
+
+  const headerBtns = document.createElement('div');
+  headerBtns.className = 'pinment-panel-header-btns';
+
+  const minimizeBtn = document.createElement('button');
+  minimizeBtn.className = 'pinment-btn-minimize';
+  minimizeBtn.title = 'Minimize panel';
+  minimizeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="13" y2="12"/></svg>';
+  if (onMinimize) minimizeBtn.addEventListener('click', onMinimize);
+  headerBtns.appendChild(minimizeBtn);
+
   const closeBtn = document.createElement('button');
   closeBtn.className = 'pinment-btn pinment-btn-close';
-  closeBtn.textContent = '\u00d7';
-  closeBtn.title = 'Close Pinment';
-  if (onClose) closeBtn.addEventListener('click', onClose);
-  header.appendChild(closeBtn);
+  closeBtn.title = 'Exit Pinment';
+  closeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></svg>';
+  const exitHandler = onExit || onClose;
+  if (exitHandler) closeBtn.addEventListener('click', exitHandler);
+  headerBtns.appendChild(closeBtn);
+
+  header.appendChild(headerBtns);
   panel.appendChild(header);
 
   // Hint
@@ -466,7 +746,7 @@ export function createPanel(pins, options = {}) {
   body.className = 'pinment-panel-body';
 
   for (const pin of pins) {
-    const comment = createCommentItem(pin, editable, { onSave, onDelete });
+    const comment = createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, onResolveToggle });
     body.appendChild(comment);
   }
 
@@ -478,13 +758,21 @@ export function createPanel(pins, options = {}) {
 
   const shareBtn = document.createElement('button');
   shareBtn.className = 'pinment-btn pinment-btn-share';
-  shareBtn.textContent = 'Share';
+  shareBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 2v8"/><path d="M4 6l4-4 4 4"/><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/></svg> Save &amp; Share';
   if (onShare) shareBtn.addEventListener('click', onShare);
   footer.appendChild(shareBtn);
 
+  const exportBtn = document.createElement('button');
+  exportBtn.className = 'pinment-btn pinment-btn-export';
+  exportBtn.title = 'Export as JSON';
+  exportBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M8 2v8"/><path d="M4 8l4 4 4-4"/></svg>';
+  if (onExport) exportBtn.addEventListener('click', onExport);
+  footer.appendChild(exportBtn);
+
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'pinment-btn pinment-btn-toggle';
-  toggleBtn.textContent = 'Toggle pins';
+  toggleBtn.title = 'Toggle pin visibility';
+  toggleBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2.5"/></svg>';
   if (onToggle) toggleBtn.addEventListener('click', onToggle);
   footer.appendChild(toggleBtn);
 
@@ -493,9 +781,17 @@ export function createPanel(pins, options = {}) {
   return panel;
 }
 
-function createCommentItem(pin, editable, { onSave, onDelete } = {}) {
+const CATEGORY_LABELS = {
+  text: 'Text issue',
+  layout: 'Layout issue',
+  missing: 'Missing content',
+  question: 'Question',
+};
+
+function createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, onResolveToggle } = {}) {
   const item = document.createElement('div');
   item.className = 'pinment-comment';
+  if (pin.resolved) item.classList.add('pinment-comment-resolved');
   item.dataset.pinmentId = pin.id;
 
   const header = document.createElement('div');
@@ -510,6 +806,14 @@ function createCommentItem(pin, editable, { onSave, onDelete } = {}) {
   author.textContent = pin.author || '';
 
   header.appendChild(badge);
+
+  if (pin.c && CATEGORY_LABELS[pin.c]) {
+    const catBadge = document.createElement('span');
+    catBadge.className = `pinment-category-badge pinment-category-${pin.c}`;
+    catBadge.textContent = CATEGORY_LABELS[pin.c];
+    header.appendChild(catBadge);
+  }
+
   header.appendChild(author);
   item.appendChild(header);
 
@@ -527,6 +831,26 @@ function createCommentItem(pin, editable, { onSave, onDelete } = {}) {
     authorInput.placeholder = 'Your name (optional)';
     item.appendChild(authorInput);
 
+    const categorySelect = document.createElement('select');
+    categorySelect.className = 'pinment-category-select';
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = 'Category (optional)';
+    categorySelect.appendChild(defaultOpt);
+    for (const [value, label] of Object.entries(CATEGORY_LABELS)) {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = label;
+      if (pin.c === value) opt.selected = true;
+      categorySelect.appendChild(opt);
+    }
+    if (onCategoryChange) {
+      categorySelect.addEventListener('change', () => {
+        onCategoryChange(pin.id, categorySelect.value || undefined);
+      });
+    }
+    item.appendChild(categorySelect);
+
     const actions = document.createElement('div');
     actions.className = 'pinment-comment-actions';
 
@@ -539,6 +863,14 @@ function createCommentItem(pin, editable, { onSave, onDelete } = {}) {
       });
     }
     actions.appendChild(saveBtn);
+
+    const resolveBtn = document.createElement('button');
+    resolveBtn.className = `pinment-btn pinment-btn-resolve ${pin.resolved ? 'pinment-btn-resolve-resolved' : 'pinment-btn-resolve-open'}`;
+    resolveBtn.textContent = pin.resolved ? 'Resolved' : 'Resolve';
+    if (onResolveToggle) {
+      resolveBtn.addEventListener('click', () => onResolveToggle(pin.id));
+    }
+    actions.appendChild(resolveBtn);
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'pinment-btn pinment-btn-delete';
@@ -559,10 +891,10 @@ function createCommentItem(pin, editable, { onSave, onDelete } = {}) {
   return item;
 }
 
-export function restorePins(state, container, currentViewportWidth) {
+export function restorePins(state, container) {
   const elements = [];
   for (const pin of state.pins) {
-    const el = createPinElement(pin, currentViewportWidth);
+    const el = createPinElement(pin);
     container.appendChild(el);
     elements.push(el);
   }
@@ -619,6 +951,23 @@ export function createWelcomeModal(validateUrl) {
   const body = document.createElement('div');
   body.className = 'pinment-modal-body';
 
+  // Start annotating: primary action on top
+  const startLabel = document.createElement('label');
+  startLabel.className = 'pinment-modal-label';
+  startLabel.textContent = 'Start a new annotation session';
+  body.appendChild(startLabel);
+
+  const freshBtn = document.createElement('button');
+  freshBtn.className = 'pinment-modal-btn pinment-modal-btn-start';
+  freshBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 1.5a1.914 1.914 0 0 1 2.707 2.707L5.707 12.707 1.5 14.5l1.793-4.207z"/></svg> Start annotating on this page';
+  body.appendChild(freshBtn);
+
+  // Divider
+  const divider = document.createElement('div');
+  divider.className = 'pinment-modal-divider';
+  divider.textContent = 'or';
+  body.appendChild(divider);
+
   // Share URL: label + input row with inline load button
   const label = document.createElement('label');
   label.className = 'pinment-modal-label';
@@ -645,18 +994,6 @@ export function createWelcomeModal(validateUrl) {
   const errorEl = document.createElement('div');
   errorEl.className = 'pinment-modal-error';
   body.appendChild(errorEl);
-
-  // Divider
-  const divider = document.createElement('div');
-  divider.className = 'pinment-modal-divider';
-  divider.textContent = 'or';
-  body.appendChild(divider);
-
-  // Start annotating button
-  const freshBtn = document.createElement('button');
-  freshBtn.className = 'pinment-modal-btn pinment-modal-btn-secondary';
-  freshBtn.textContent = 'Start annotating on this page';
-  body.appendChild(freshBtn);
 
   modal.appendChild(body);
   backdrop.appendChild(modal);
@@ -710,9 +1047,9 @@ export function createWelcomeModal(validateUrl) {
       }
     });
 
-    // Focus the input and try clipboard pre-fill
+    // Focus the start button by default; switch to input if clipboard has a share URL
     setTimeout(() => {
-      input.focus();
+      freshBtn.focus();
       if (navigator.clipboard && navigator.clipboard.readText) {
         navigator.clipboard.readText().then((clipText) => {
           const trimmed = (clipText || '').trim();
@@ -724,6 +1061,7 @@ export function createWelcomeModal(validateUrl) {
             hint.className = 'pinment-modal-clipboard-hint';
             hint.textContent = 'Pre-filled from clipboard';
             inputRow.parentNode.insertBefore(hint, errorEl);
+            input.focus();
           }
         }).catch(() => {
           // Clipboard access denied — no problem, user can paste manually
@@ -820,4 +1158,98 @@ export function createDocsSiteModal() {
   });
 
   return { modal: backdrop, promise };
+}
+
+/**
+ * Creates a small floating pill button shown when the panel is minimized.
+ *
+ * @param {() => void} onRestore - callback to restore the panel
+ * @returns {HTMLElement}
+ */
+export function createMinimizedButton(onRestore) {
+  const btn = document.createElement('button');
+  btn.className = 'pinment-minimized-btn';
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 1.5a1.914 1.914 0 0 1 2.707 2.707L5.707 12.707 1.5 14.5l1.793-4.207z"/></svg> Pinment';
+  if (onRestore) btn.addEventListener('click', onRestore);
+  return btn;
+}
+
+/**
+ * Creates an exit confirmation modal warning about unsaved annotations.
+ *
+ * @param {{ onCopyAndExit: () => void, onExitWithout: () => void, onCancel: () => void }} callbacks
+ * @returns {{ modal: HTMLElement }}
+ */
+export function createExitConfirmModal({ onCopyAndExit, onExitWithout, onCancel }) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'pinment-modal-backdrop';
+
+  const modal = document.createElement('div');
+  modal.className = 'pinment-modal';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'pinment-modal-header';
+  const title = document.createElement('h2');
+  title.className = 'pinment-modal-title';
+  title.textContent = 'Exit Pinment?';
+  header.appendChild(title);
+  modal.appendChild(header);
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'pinment-modal-body';
+
+  const warning = document.createElement('p');
+  warning.className = 'pinment-modal-notice';
+  warning.textContent = 'Your annotations are not saved anywhere. If you exit now, all pins and comments will be lost.';
+  body.appendChild(warning);
+
+  const actions = document.createElement('div');
+  actions.className = 'pinment-exit-actions';
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'pinment-modal-btn pinment-modal-btn-primary';
+  copyBtn.textContent = 'Copy Share URL & Exit';
+  copyBtn.style.width = '100%';
+  copyBtn.addEventListener('click', () => {
+    backdrop.remove();
+    if (onCopyAndExit) onCopyAndExit();
+  });
+  actions.appendChild(copyBtn);
+
+  const exitBtn = document.createElement('button');
+  exitBtn.className = 'pinment-modal-btn pinment-modal-btn-danger';
+  exitBtn.textContent = 'Exit Without Saving';
+  exitBtn.addEventListener('click', () => {
+    backdrop.remove();
+    if (onExitWithout) onExitWithout();
+  });
+  actions.appendChild(exitBtn);
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'pinment-modal-btn pinment-modal-btn-secondary';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', () => {
+    backdrop.remove();
+    if (onCancel) onCancel();
+  });
+  actions.appendChild(cancelBtn);
+
+  body.appendChild(actions);
+  modal.appendChild(body);
+  backdrop.appendChild(modal);
+
+  // Escape = cancel
+  backdrop.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelBtn.click();
+    }
+  });
+
+  // Focus cancel button by default
+  setTimeout(() => cancelBtn.focus(), 0);
+
+  return { modal: backdrop };
 }

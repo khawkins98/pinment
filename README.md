@@ -20,7 +20,8 @@ No backend. No accounts. The URL *is* the review.
 
 ## Good to know
 
-- Pins may drift if the page layout changes between annotation and review (a viewport mismatch warning is shown)
+- Pins are anchored to DOM elements, so they stay in place across different viewport sizes and responsive layouts
+- When loading shared annotations, you'll see the original reviewer's browser, viewport, and device type
 - Pages with strict Content Security Policy (CSP) may block the bookmarklet
 - The URL has a practical size limit of ~8KB; a capacity indicator in the panel shows usage
 
@@ -37,7 +38,7 @@ Two existing projects store full documents in the URL hash, well beyond config t
 - **[Buffertab](https://github.com/AlexW00/Buffertab)** (MIT) -- A markdown editor that lives entirely in the URL hash. Uses pako (zlib/deflate) for compression with a visual indicator of URL length usage. Pinment borrows its compression strategy and capacity indicator from Buffertab.
 - **[Inkash](https://github.com/taqui-786/inkash)** -- Markdown editor and freehand canvas drawing, also URL-hash-only. Adds QR code sharing and export to PNG/SVG/HTML. Shows that canvas data can fit in a URL too.
 
-Pinment extends this pattern from text/drawing to spatial annotation on live webpages.
+Pinment extends this pattern from text/drawing to spatial annotation on live webpages. The element-based anchoring approach draws on techniques used by [Hypothesis](https://web.hypothes.is/) (open-source web annotation) and browser DevTools CSS selector generation.
 
 ---
 
@@ -47,9 +48,13 @@ Pinment extends this pattern from text/drawing to spatial annotation on live web
 
 All annotation data (page URL, viewport width, pin positions, comments) is serialized to JSON and compressed with [lz-string](https://github.com/pieroxy/lz-string) into the URL hash (`#data=...`). There is no server or database -- the URL is the entire review.
 
-### Pin coordinates
+### Pin anchoring
 
-Pin positions are stored as an x-ratio (0--1) relative to viewport width plus a y-offset in absolute pixels from the document top. The original viewport width is recorded so a mismatch warning can be shown when reviewing at a different size.
+Pins are anchored to DOM elements rather than raw pixel coordinates. When a pin is placed, Pinment identifies the element under the click using `elementFromPoint`, generates a stable CSS selector for it, and stores the click position as offset ratios within the element's bounding box. This means pins stay in place across different viewport sizes and responsive layouts. Fallback pixel coordinates are also stored for cases where the element can't be found on restore.
+
+The selector generation algorithm prefers stable identifiers: IDs, `data-testid` attributes, semantic class names, then `nth-of-type` as a last resort. Framework-generated class names and unstable IDs are filtered out.
+
+Shared annotations also include compact browser/device metadata (browser name/version, viewport dimensions, device type) so recipients understand the original review context.
 
 ### Architecture
 
@@ -62,7 +67,8 @@ Pin positions are stored as an x-ratio (0--1) relative to viewport width plus a 
 
 ```
 src/
-  state.js                  # Shared state serialization/compression
+  state.js                  # State schema v2, serialization/compression
+  selector.js               # CSS selector generation, environment detection
   bookmarklet/
     index.js                # Bookmarklet entry point (bundled into javascript: URI)
     ui.js                   # Pin elements, comment panel, styles
@@ -72,6 +78,7 @@ css/
   style.css                 # Hub site styles
 tests/
   state.test.js             # State module tests
+  selector.test.js          # Selector generation tests
   bookmarklet.test.js       # Bookmarklet UI tests
   hub.test.js               # Hub site tests
 scripts/

@@ -6,7 +6,7 @@
  * 2. If the URL contains a #data= fragment, decodes and displays the annotation
  *    data so the user can see the review even without visiting the target page
  */
-import { decompress, validateState } from '../src/state.js';
+import { decompress, validateState, exportStateAsJson } from '../src/state.js';
 
 export function parseHashData(hash) {
   if (!hash || !hash.startsWith('#data=')) return null;
@@ -24,9 +24,17 @@ export function renderViewer(state) {
 
   if (!viewer || !meta || !pinsList) return;
 
-  // Hide install, show viewer
-  if (install) install.hidden = true;
+  // Show viewer; collapse install to just the bookmarklet step
   viewer.hidden = false;
+  if (install) {
+    install.querySelectorAll('.step:not(.step-featured)').forEach(s => { s.hidden = true; });
+    const stepsList = install.querySelector('.steps');
+    if (stepsList) stepsList.classList.add('steps-compact');
+    // Move viewer above the install section
+    if (install.parentNode === viewer.parentNode) {
+      viewer.parentNode.insertBefore(viewer, install);
+    }
+  }
 
   // Render meta info
   meta.innerHTML = '';
@@ -42,9 +50,22 @@ export function renderViewer(state) {
   urlP.appendChild(urlLink);
   meta.appendChild(urlP);
 
-  const viewportP = document.createElement('p');
-  viewportP.textContent = `Viewport: ${state.viewport}px`;
-  meta.appendChild(viewportP);
+  if (state.env) {
+    const envP = document.createElement('p');
+    const parts = [];
+    if (state.env.ua) parts.push('Browser: ' + state.env.ua);
+    if (state.env.vp) parts.push('Viewport: ' + state.env.vp[0] + '\u00d7' + state.env.vp[1]);
+    if (state.env.dt) {
+      const labels = { d: 'Desktop', t: 'Tablet', m: 'Mobile' };
+      parts.push(labels[state.env.dt] || state.env.dt);
+    }
+    envP.textContent = parts.join(' \u2022 ');
+    meta.appendChild(envP);
+  } else {
+    const viewportP = document.createElement('p');
+    viewportP.textContent = `Viewport: ${state.viewport}px`;
+    meta.appendChild(viewportP);
+  }
 
   const pinCountP = document.createElement('p');
   pinCountP.textContent = `${state.pins.length} annotation${state.pins.length !== 1 ? 's' : ''}`;
@@ -80,7 +101,30 @@ export function renderViewer(state) {
   });
   actions.appendChild(copyBtn);
 
+  // Export button
+  const exportBtn = document.createElement('button');
+  exportBtn.className = 'viewer-btn viewer-btn-secondary';
+  exportBtn.textContent = 'Export JSON';
+  exportBtn.addEventListener('click', () => {
+    const json = exportStateAsJson(state);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pinment-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  actions.appendChild(exportBtn);
+
   meta.appendChild(actions);
+
+  const CATEGORY_LABELS = {
+    text: 'Text issue',
+    layout: 'Layout issue',
+    missing: 'Missing content',
+    question: 'Question',
+  };
 
   // Render pin list
   pinsList.innerHTML = '';
@@ -88,6 +132,7 @@ export function renderViewer(state) {
     const item = document.createElement('div');
     item.setAttribute('role', 'listitem');
     item.className = 'review-pin';
+    if (pin.resolved) item.classList.add('review-pin-resolved');
 
     const header = document.createElement('div');
     header.className = 'review-pin-header';
@@ -96,11 +141,26 @@ export function renderViewer(state) {
     badge.className = 'review-pin-number';
     badge.textContent = String(pin.id);
 
+    header.appendChild(badge);
+
+    if (pin.c && CATEGORY_LABELS[pin.c]) {
+      const catBadge = document.createElement('span');
+      catBadge.className = `review-pin-category review-pin-category-${pin.c}`;
+      catBadge.textContent = CATEGORY_LABELS[pin.c];
+      header.appendChild(catBadge);
+    }
+
+    if (pin.resolved) {
+      const resolvedBadge = document.createElement('span');
+      resolvedBadge.className = 'review-pin-resolved-badge';
+      resolvedBadge.textContent = 'Resolved';
+      header.appendChild(resolvedBadge);
+    }
+
     const author = document.createElement('span');
     author.className = 'review-pin-author';
     author.textContent = pin.author ? ` by ${pin.author}` : '';
 
-    header.appendChild(badge);
     header.appendChild(author);
     item.appendChild(header);
 
@@ -111,7 +171,11 @@ export function renderViewer(state) {
 
     const coords = document.createElement('p');
     coords.className = 'review-pin-coords';
-    coords.textContent = `Position: ${Math.round(pin.x * 100)}% from left, ${pin.y}px from top`;
+    if (pin.s) {
+      coords.textContent = `Anchored to: ${pin.s}`;
+    } else {
+      coords.textContent = `Position: ${Math.round(pin.fx)}px, ${Math.round(pin.fy)}px (pixel fallback)`;
+    }
     item.appendChild(coords);
 
     pinsList.appendChild(item);
@@ -126,8 +190,15 @@ export function renderError(message) {
 
   if (!viewer || !meta || !pinsList) return;
 
-  if (install) install.hidden = true;
   viewer.hidden = false;
+  if (install) {
+    install.querySelectorAll('.step:not(.step-featured)').forEach(s => { s.hidden = true; });
+    const stepsList = install.querySelector('.steps');
+    if (stepsList) stepsList.classList.add('steps-compact');
+    if (install.parentNode === viewer.parentNode) {
+      viewer.parentNode.insertBefore(viewer, install);
+    }
+  }
 
   meta.innerHTML = '';
   const errorP = document.createElement('p');
