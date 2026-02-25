@@ -606,6 +606,81 @@ export function buildStyles() {
 .pinment-btn-toggle:hover {
   color: #4a5568;
 }
+.pinment-pin-dragging {
+  cursor: grabbing !important;
+  opacity: 0.7;
+  transform: translate(-50%, -50%) scale(1.3);
+  z-index: 2147483645;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  transition: none;
+}
+.pinment-replies {
+  margin-top: 8px;
+  padding-left: 12px;
+  border-left: 2px solid #e2e8f0;
+}
+.pinment-reply {
+  padding: 6px 0;
+  font-size: 13px;
+}
+.pinment-reply + .pinment-reply {
+  border-top: 1px solid #f7fafc;
+}
+.pinment-reply-author {
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 12px;
+}
+.pinment-reply-text {
+  color: #2d3748;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.pinment-reply-form {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pinment-reply-input {
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 12px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.pinment-reply-actions {
+  display: flex;
+  gap: 4px;
+}
+.pinment-btn-reply {
+  font-size: 12px;
+  padding: 3px 8px;
+  color: #3182ce;
+  border-color: #bee3f8;
+}
+.pinment-btn-add-reply {
+  font-size: 12px;
+  padding: 3px 8px;
+  background: #3182ce;
+  color: #fff;
+  border-color: #3182ce;
+}
+.pinment-btn-add-reply:hover {
+  background: #2b6cb0;
+}
+.pinment-btn-cancel-reply {
+  font-size: 12px;
+  padding: 3px 8px;
+}
+.pinment-btn-import {
+  font-size: 12px;
+  padding: 6px 10px;
+}
 `;
 }
 
@@ -702,7 +777,7 @@ export function createPinElement(pin) {
 }
 
 export function createPanel(pins, options = {}) {
-  const { editable = false, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport } = options;
+  const { editable = false, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport, onReply, onImport } = options;
 
   const panel = document.createElement('div');
   panel.className = 'pinment-panel';
@@ -746,7 +821,7 @@ export function createPanel(pins, options = {}) {
   body.className = 'pinment-panel-body';
 
   for (const pin of pins) {
-    const comment = createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, onResolveToggle });
+    const comment = createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, onResolveToggle, onReply });
     body.appendChild(comment);
   }
 
@@ -769,6 +844,13 @@ export function createPanel(pins, options = {}) {
   if (onExport) exportBtn.addEventListener('click', onExport);
   footer.appendChild(exportBtn);
 
+  const importBtn = document.createElement('button');
+  importBtn.className = 'pinment-btn pinment-btn-import';
+  importBtn.title = 'Import from JSON';
+  importBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M8 10V2"/><path d="M4 4l4-4 4 4"/></svg>';
+  if (onImport) importBtn.addEventListener('click', onImport);
+  footer.appendChild(importBtn);
+
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'pinment-btn pinment-btn-toggle';
   toggleBtn.title = 'Toggle pin visibility';
@@ -788,7 +870,29 @@ const CATEGORY_LABELS = {
   question: 'Question',
 };
 
-function createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, onResolveToggle } = {}) {
+function renderReplies(replies) {
+  const container = document.createElement('div');
+  container.className = 'pinment-replies';
+  for (const reply of replies) {
+    const replyEl = document.createElement('div');
+    replyEl.className = 'pinment-reply';
+    if (reply.author) {
+      const authorEl = document.createElement('span');
+      authorEl.className = 'pinment-reply-author';
+      authorEl.textContent = reply.author;
+      replyEl.appendChild(authorEl);
+      replyEl.appendChild(document.createTextNode(' '));
+    }
+    const textEl = document.createElement('span');
+    textEl.className = 'pinment-reply-text';
+    textEl.textContent = reply.text;
+    replyEl.appendChild(textEl);
+    container.appendChild(replyEl);
+  }
+  return container;
+}
+
+function createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, onResolveToggle, onReply } = {}) {
   const item = document.createElement('div');
   item.className = 'pinment-comment';
   if (pin.resolved) item.classList.add('pinment-comment-resolved');
@@ -881,11 +985,73 @@ function createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, 
     actions.appendChild(deleteBtn);
 
     item.appendChild(actions);
+
+    // Replies section (editable)
+    if (pin.replies && pin.replies.length > 0) {
+      item.appendChild(renderReplies(pin.replies));
+    }
+
+    // Reply button and form
+    const replyBtn = document.createElement('button');
+    replyBtn.className = 'pinment-btn pinment-btn-reply';
+    replyBtn.textContent = 'Reply';
+    item.appendChild(replyBtn);
+
+    replyBtn.addEventListener('click', () => {
+      // Toggle reply form
+      let form = item.querySelector('.pinment-reply-form');
+      if (form) {
+        form.remove();
+        return;
+      }
+      form = document.createElement('div');
+      form.className = 'pinment-reply-form';
+
+      const replyInput = document.createElement('textarea');
+      replyInput.className = 'pinment-reply-input';
+      replyInput.placeholder = 'Write a reply\u2026';
+      form.appendChild(replyInput);
+
+      const replyAuthorInput = document.createElement('input');
+      replyAuthorInput.className = 'pinment-author-input';
+      replyAuthorInput.type = 'text';
+      replyAuthorInput.placeholder = 'Your name (optional)';
+      replyAuthorInput.value = pin.author || '';
+      form.appendChild(replyAuthorInput);
+
+      const replyActions = document.createElement('div');
+      replyActions.className = 'pinment-reply-actions';
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'pinment-btn pinment-btn-add-reply';
+      addBtn.textContent = 'Add reply';
+      addBtn.addEventListener('click', () => {
+        const text = replyInput.value.trim();
+        if (!text) return;
+        if (onReply) onReply(pin.id, text, replyAuthorInput.value);
+      });
+      replyActions.appendChild(addBtn);
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'pinment-btn pinment-btn-cancel-reply';
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.addEventListener('click', () => form.remove());
+      replyActions.appendChild(cancelBtn);
+
+      form.appendChild(replyActions);
+      item.appendChild(form);
+      replyInput.focus();
+    });
   } else {
     const text = document.createElement('div');
     text.className = 'pinment-comment-text';
     text.textContent = pin.text;
     item.appendChild(text);
+
+    // Replies section (read-only)
+    if (pin.replies && pin.replies.length > 0) {
+      item.appendChild(renderReplies(pin.replies));
+    }
   }
 
   return item;
@@ -910,7 +1076,7 @@ export function restorePins(state, container) {
  *   parsed state if the URL is valid, or null if not.
  * @returns {{ modal: HTMLElement, promise: Promise<string|null|false> }}
  */
-export function createWelcomeModal(validateUrl) {
+export function createWelcomeModal(validateUrl, validateImport) {
   const backdrop = document.createElement('div');
   backdrop.className = 'pinment-modal-backdrop';
 
@@ -995,6 +1161,26 @@ export function createWelcomeModal(validateUrl) {
   errorEl.className = 'pinment-modal-error';
   body.appendChild(errorEl);
 
+  // Import from JSON divider + button
+  const divider2 = document.createElement('div');
+  divider2.className = 'pinment-modal-divider';
+  divider2.textContent = 'or';
+  body.appendChild(divider2);
+
+  const importLabel = document.createElement('label');
+  importLabel.className = 'pinment-modal-label';
+  importLabel.textContent = 'Import from a JSON file';
+  body.appendChild(importLabel);
+
+  const importBtn = document.createElement('button');
+  importBtn.className = 'pinment-modal-btn pinment-modal-btn-secondary';
+  importBtn.textContent = 'Choose JSON file\u2026';
+  body.appendChild(importBtn);
+
+  const importError = document.createElement('div');
+  importError.className = 'pinment-modal-error';
+  body.appendChild(importError);
+
   modal.appendChild(body);
   backdrop.appendChild(modal);
 
@@ -1023,6 +1209,32 @@ export function createWelcomeModal(validateUrl) {
       }
       backdrop.remove();
       resolve(value);
+    });
+
+    importBtn.addEventListener('click', () => {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.json,application/json';
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const state = JSON.parse(reader.result);
+            if (validateImport && !validateImport(state)) {
+              importError.textContent = 'Invalid Pinment JSON file. Check the file and try again.';
+              return;
+            }
+            backdrop.remove();
+            resolve(state);
+          } catch {
+            importError.textContent = 'Could not parse JSON file. Check the file and try again.';
+          }
+        };
+        reader.readAsText(file);
+      });
+      fileInput.click();
     });
 
     // Clear error on input

@@ -6,7 +6,7 @@
  * 2. If the URL contains a #data= fragment, decodes and displays the annotation
  *    data so the user can see the review even without visiting the target page
  */
-import { decompress, validateState, exportStateAsJson } from '../src/state.js';
+import { decompress, validateState, exportStateAsJson, importStateFromJson } from '../src/state.js';
 
 export function parseHashData(hash) {
   if (!hash || !hash.startsWith('#data=')) return null;
@@ -178,6 +178,29 @@ export function renderViewer(state) {
     }
     item.appendChild(coords);
 
+    // Replies
+    if (pin.replies && pin.replies.length > 0) {
+      const repliesContainer = document.createElement('div');
+      repliesContainer.className = 'review-pin-replies';
+      for (const reply of pin.replies) {
+        const replyEl = document.createElement('div');
+        replyEl.className = 'review-pin-reply';
+        if (reply.author) {
+          const replyAuthor = document.createElement('span');
+          replyAuthor.className = 'review-pin-reply-author';
+          replyAuthor.textContent = reply.author;
+          replyEl.appendChild(replyAuthor);
+          replyEl.appendChild(document.createTextNode(' '));
+        }
+        const replyText = document.createElement('span');
+        replyText.className = 'review-pin-reply-text';
+        replyText.textContent = reply.text;
+        replyEl.appendChild(replyText);
+        repliesContainer.appendChild(replyEl);
+      }
+      item.appendChild(repliesContainer);
+    }
+
     pinsList.appendChild(item);
   }
 }
@@ -232,6 +255,31 @@ export function init() {
       }
     }
   });
+
+  // Import JSON button
+  const importBtn = document.getElementById('import-json-btn');
+  if (importBtn) {
+    importBtn.addEventListener('click', () => {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.json,application/json';
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const state = importStateFromJson(reader.result);
+          if (state) {
+            renderViewer(state);
+          } else {
+            renderError('Invalid Pinment JSON file. Check the file and try again.');
+          }
+        };
+        reader.readAsText(file);
+      });
+      fileInput.click();
+    });
+  }
 }
 
 // Auto-init when loaded as a script (not during tests)

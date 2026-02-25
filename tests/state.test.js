@@ -8,6 +8,7 @@ import {
   validateState,
   estimateUrlSize,
   exportStateAsJson,
+  importStateFromJson,
   SCHEMA_VERSION,
   MAX_URL_BYTES,
   PIN_CATEGORIES,
@@ -257,6 +258,86 @@ describe('validateState', () => {
     ]};
     expect(validateState(state)).toBeNull();
   });
+
+  it('accepts pin with valid replies', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test',
+        replies: [{ author: 'KH', text: 'Fixed' }] },
+    ]};
+    expect(validateState(state)).toEqual(state);
+  });
+
+  it('accepts pin with empty replies array', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test', replies: [] },
+    ]};
+    expect(validateState(state)).toEqual(state);
+  });
+
+  it('accepts pin without replies field', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test' },
+    ]};
+    expect(validateState(state)).toEqual(state);
+  });
+
+  it('rejects pin with non-array replies', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test', replies: 'not array' },
+    ]};
+    expect(validateState(state)).toBeNull();
+  });
+
+  it('rejects reply with missing text', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test',
+        replies: [{ author: 'KH' }] },
+    ]};
+    expect(validateState(state)).toBeNull();
+  });
+
+  it('rejects reply with non-string text', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test',
+        replies: [{ text: 42 }] },
+    ]};
+    expect(validateState(state)).toBeNull();
+  });
+
+  it('rejects reply with non-string author', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test',
+        replies: [{ author: 42, text: 'reply' }] },
+    ]};
+    expect(validateState(state)).toBeNull();
+  });
+
+  it('accepts reply without author', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test',
+        replies: [{ text: 'anonymous reply' }] },
+    ]};
+    expect(validateState(state)).toEqual(state);
+  });
+
+  it('rejects reply that is null', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test',
+        replies: [null] },
+    ]};
+    expect(validateState(state)).toBeNull();
+  });
+
+  it('accepts pin with multiple replies', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test',
+        replies: [
+          { author: 'KH', text: 'Fixed' },
+          { author: 'FL', text: 'Confirmed' },
+        ] },
+    ]};
+    expect(validateState(state)).toEqual(state);
+  });
 });
 
 describe('PIN_CATEGORIES', () => {
@@ -288,6 +369,35 @@ describe('exportStateAsJson', () => {
     const state = createState('https://example.com', 1440);
     const json = exportStateAsJson(state);
     expect(json).toContain('\n');
+  });
+});
+
+describe('importStateFromJson', () => {
+  it('parses valid JSON and returns validated state', () => {
+    const state = createState('https://example.com', 1440, [v2Pin()]);
+    const json = JSON.stringify(state);
+    const result = importStateFromJson(json);
+    expect(result).toEqual(state);
+  });
+
+  it('returns null for invalid JSON', () => {
+    expect(importStateFromJson('not json')).toBeNull();
+  });
+
+  it('returns null for empty string', () => {
+    expect(importStateFromJson('')).toBeNull();
+  });
+
+  it('returns null for valid JSON with wrong schema', () => {
+    expect(importStateFromJson('{"v":99}')).toBeNull();
+  });
+
+  it('preserves replies in imported state', () => {
+    const state = createState('https://example.com', 1440, [
+      v2Pin({ replies: [{ author: 'KH', text: 'Done' }] }),
+    ]);
+    const result = importStateFromJson(JSON.stringify(state));
+    expect(result.pins[0].replies).toEqual([{ author: 'KH', text: 'Done' }]);
   });
 });
 

@@ -1,169 +1,130 @@
 # Pinment -- Product Requirements Document
 
----
-
 ## Problem
 
-Reviewing webpage content -- especially unpublished or staging pages -- requires giving feedback that combines text comments with spatial context (where on the page the issue is). Current approaches are either expensive/proprietary (Marker.io, Pastel), limited to text-only review (Word track changes), or require screenshots that quickly go stale. There is no free, zero-infrastructure tool that lets a reviewer pin comments directly on a live webpage and share the annotated state via a single URL.
+Reviewing webpage content -- especially unpublished or staging pages -- requires feedback that combines text comments with spatial context ("this heading", "that image", "the gap between the nav and the hero"). Current approaches are either expensive/proprietary (Marker.io, Pastel), limited to text-only review (Word track changes), or require screenshots that go stale the moment someone pastes them into a chat. There is no free, zero-infrastructure tool that lets a reviewer pin comments directly to a live webpage and share the annotated view via a single URL.
 
-## Proposed solution
+## Solution
 
-Pinment is a bookmarklet-driven annotation tool backed by a static hub site hosted on GitHub Pages. A reviewer activates the bookmarklet on any page they can view in their browser -- published, staging, localhost, behind auth -- and drops numbered pins with comments directly on the live page. The tool serializes all annotations (page URL, viewport width, pin coordinates, comments) into a compressed URL fragment. A recipient opens the share link, navigates to the same page, activates the bookmarklet, and sees the pins overlaid in place. No backend, no accounts, no database.
+Pinment is a client-side bookmarklet that injects an annotation UI onto any live webpage. Reviewers place numbered pins with comments, then share the entire annotated state as a compressed URL fragment. No backend, no accounts, no database. The URL is the review.
 
 ## Core workflow
 
-1. **Activate** -- Reviewer navigates to the page under review and clicks the Pinment bookmarklet; the annotation UI injects into the page
-2. **Annotate** -- Reviewer clicks anywhere on the page to drop a numbered pin and add a comment
-3. **Share** -- The bookmarklet serializes all annotations into a compressed Pinment URL; the reviewer copies and sends the link
-4. **Review** -- Recipient opens the Pinment link, which shows the annotation data with action buttons; they click "Copy share URL", open the target page, click the bookmarklet (share URL is pre-filled from clipboard), and the saved pins appear in place
+1. **Install** -- Drag the Pinment bookmarklet to the bookmarks bar (one-time setup)
+2. **Navigate** -- Go to the page to review (published, staging, localhost, or behind auth)
+3. **Annotate** -- Click anywhere on the page to drop a numbered pin and add a comment
+4. **Share** -- Hit Share to copy a link. Recipient opens the page, clicks the bookmarklet, and the share URL is pre-filled from their clipboard
 
-## Design decisions
+## Key design decisions
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Element-anchored pins vs. pixel coordinates | DOM element selectors + offset ratios | Resilient to viewport changes and responsive layouts; pins stay on the correct element regardless of window size; fallback pixel coordinates stored for robustness |
-| Injection method | Bookmarklet | Works on any page the user can already see (localhost, staging, authenticated pages); no extension store approval; no CORS issues since JS runs in the page's own context |
+| Bookmarklet vs. browser extension | Bookmarklet | No install/approval process; works cross-browser immediately |
+| Live page vs. screenshot | Live page | Pins bind to real DOM elements; avoids CORS/X-Frame-Options issues; no screenshot capture needed |
+| Element selectors vs. pixel coords | Element selectors + pixel fallback | Resilient to viewport/responsive changes; pixel fallback when DOM changes |
 | Storage | URL hash (compressed) | Zero infrastructure; shareable via any channel (Teams, email, chat) |
-| Hosting (hub site) | GitHub Pages | Free, no server to maintain |
-| Auth | None | Simplicity; feedback links are obscure URLs (security through obscurity is acceptable for non-sensitive content review) |
+| Compression | lz-string | Browser-compatible, good compression for JSON text, URL-safe encoding |
+| Hosting | GitHub Pages | Free, no server to maintain, auto-deploys via GitHub Actions |
+| CSS isolation | Namespaced classes (`pinment-*`) | Simpler event handling than shadow DOM; sufficient for bookmarklet use |
+| Auth | None | Simplicity; feedback links are obscure URLs (acceptable for non-sensitive content review) |
 
 ## Functional requirements
 
-### Must have (MVP) -- all complete
+### Implemented
 
-- [x] **FR-01** Bookmarklet activation: a single bookmarklet click injects the Pinment annotation UI into the current page
-- [x] **FR-02** Pin placement: click anywhere on the page to place a numbered marker at that position
-- [x] **FR-03** Comment entry: each pin has an editable text comment and an optional author name
-- [x] **FR-04** Comment panel: an overlay panel listing all comments by pin number, injected into the page by the bookmarklet
-- [x] **FR-05** Share URL generation: serialize all state (target page URL, viewport width, pin coordinates, comments) into a compressed URL fragment
-- [x] **FR-06** Annotation restore: when the bookmarklet is activated on the target page, the welcome modal attempts to pre-fill the share URL from the clipboard; the user can also paste manually. Valid URLs reconstruct all pins in their original positions.
-- [x] **FR-07** Pin visibility toggle: show/hide all pins to see the page without annotation clutter
-- [x] **FR-08** Hub site: a static GitHub Pages site where users can install the bookmarklet (drag to bookmarks bar), view annotation data from a share URL (with "Open target page" and "Copy share URL" action buttons), and show a clear error message when share data is corrupted or incomplete
-- [x] **FR-09** URL capacity enforcement: the Share button is disabled when annotations exceed the ~8KB URL limit; the capacity indicator shows "over limit" with the actual size
-- [x] **FR-10** Pin deletion confirmation: deleting a pin requires explicit confirmation to prevent accidental data loss
+- **FR-01** Bookmarklet injection: inject annotation UI onto any page via `javascript:` URI
+- **FR-02** Pin placement: click on the page to place a numbered marker anchored to a DOM element
+- **FR-03** Comment entry: each pin has an editable text comment and an optional author name
+- **FR-04** Comment panel: fixed sidebar listing all comments by pin number
+- **FR-05** Share URL generation: serialize state into a compressed URL fragment using lz-string
+- **FR-06** URL restore: pasting a Pinment share URL in the welcome modal reconstructs all annotations
+- **FR-07** Pin visibility toggle: show/hide all pins to see the clean page
+- **FR-08** Responsive awareness: viewport/device metadata captured and shown to recipients
+- **FR-09** Welcome modal: start fresh, load from share URL, or import from JSON
+- **FR-10** Exit confirmation: warns about unsaved annotations with option to copy share URL
+- **FR-11** Pin categories: label pins as text issue, layout issue, missing content, or question
+- **FR-12** Pin status: mark individual pins as resolved/open
+- **FR-13** JSON export: download annotation state as a JSON file
+- **FR-14** JSON import: load annotations from a previously exported JSON file
+- **FR-15** Pin drag-and-drop: reposition pins by dragging; recalculates element anchor on drop
+- **FR-16** Thread replies: reply to any pin to create a conversation; replies persist in share URL
+- **FR-17** Hub site viewer: web page that decodes share URLs and displays annotation summary
+- **FR-18** Clipboard pre-fill: welcome modal detects share URL on clipboard and pre-fills
+- **FR-19** Panel minimize/restore: collapse panel to a floating pill button
+- **FR-20** URL capacity indicator: visual bar showing how close annotations are to the ~8KB limit
+- **FR-21** Author persistence: author name saved to localStorage across sessions
 
-### Should have (v1.1)
+### Future
 
-- [x] **FR-11** Pin categories: label pins by type (text issue, layout issue, missing content, question)
-- [x] **FR-12** Pin status: mark individual comments as resolved/open
-- [x] **FR-13** Export: download annotations as a JSON file for archival or import
-- ~~**FR-14** Multiple viewports: store annotations per viewport width so desktop and mobile reviews stay separate~~ — Addressed by element-based anchoring (pins stay on their target element across viewport sizes) and browser/device metadata (recipients see the original reviewer's viewport context)
-
-### Could have (future)
-
-- **FR-15** Browser extension: a more integrated version of the bookmarklet with toolbar icon and persistent state
-- **FR-16** Integration with GitHub Issues: export pins as issues with coordinate and page context
-- **FR-17** Comparison mode: view annotations from two reviewers side-by-side on the same page
+- **FR-22** Browser extension: bypass CSP restrictions, enable richer UX
+- **FR-23** GitHub Issues export: export pins directly as GitHub issues
+- **FR-24** Multi-reviewer comparison: merge/diff annotations from multiple share URLs
+- **FR-25** Keyboard shortcuts: Esc to cancel pin mode, N for new pin, arrows to navigate
+- **FR-26** Filter/sort pins: by category, status, or author
 
 ## Non-functional requirements
 
-- **NFR-01** No backend dependencies; entire tool runs client-side (bookmarklet + hub site)
-- **NFR-02** URL state should support at least ~50 annotations before hitting browser URL limits (annotations without embedded images are much smaller)
-- **NFR-03** Bookmarklet injection should complete in under 1 second
-- **NFR-04** Works in Chrome, Firefox, Edge (latest versions)
-- **NFR-05** Accessible: keyboard-navigable comment panel, sufficient colour contrast on pins
-- **NFR-06** Bookmarklet must not break the host page's layout or functionality when deactivated
+- **NFR-01** No backend dependencies; entire app runs client-side
+- **NFR-02** URL state supports ~50 annotations before hitting the ~8KB URL limit
+- **NFR-03** Works in Chrome, Firefox, Edge (latest versions)
+- **NFR-04** Bookmarklet CSS uses `pinment-*` namespace to avoid conflicts with host pages
+- **NFR-05** Comprehensive test coverage (Vitest + jsdom)
 
-## Inspiration and prior art
-
-The URL-as-state pattern at the heart of Pinment was prompted by Ahmad El-Alfy's [Your URL is your state](https://alfy.blog/2025/10/31/your-url-is-your-state.html) and explored further in [URLs are the state management you should use](https://allaboutken.com/posts/20251226-url-state-management/).
-
-Two open-source projects store full documents in the URL hash, well beyond simple config toggles:
-
-- **[Buffertab](https://github.com/AlexW00/Buffertab)** (MIT license) -- A markdown editor where the document lives entirely in the URL hash. Uses **pako** (zlib/deflate) for compression with a visual indicator showing how much URL capacity remains. Pinment borrows its compression strategy and capacity indicator from Buffertab. As an MIT-licensed project, its implementation can be referenced and adapted.
-- **[Inkash](https://github.com/taqui-786/inkash)** (no license specified) -- Markdown editor plus freehand canvas drawing, also URL-hash-only. Adds QR code generation for sharing and export to PNG/SVG/HTML. Shows that canvas data can also fit in a URL.
-
-Pinment extends this pattern from text and drawing to spatial annotation on live webpages: instead of encoding a document, we encode a set of positioned comments anchored to DOM elements on a page.
-
-The element-based anchoring approach draws on techniques from:
-
-- **[Hypothesis](https://web.hypothes.is/)** -- An open-source web annotation tool that pioneered element-anchored annotations on arbitrary webpages. Hypothesis uses XPath and text-based anchoring; Pinment uses CSS selectors with offset ratios for a more compact URL representation.
-- **Browser DevTools** -- Chrome, Firefox, and Edge all implement CSS selector generation (used in "Copy selector") with similar strategies of preferring IDs and stable attributes over positional selectors.
-
-## Technical approach
-
-- **Bookmarklet:** Self-contained JS payload that injects the annotation UI (pin overlay, comment panel, share controls) into the host page; must be careful to scope CSS and avoid polluting the host page's global namespace
-- **Hub site framework:** Vanilla JS or lightweight (Preact/Alpine.js) -- keep bundle small
-- **State compression:** lz-string (browser-compatible, good compression for JSON text)
-- **Hosting:** GitHub Pages from a public repo (also serves as the project's codebase)
-- **URL structure:** `https://{org}.github.io/pinment/#data={compressed-base64-state}`
-- **Local development:** Node.js with package.json for dependency management; Vite as the dev server and build tool; Vitest (or similar) for unit and integration testing
-- **Bookmarklet build:** The bookmarklet source lives in the repo as a standard JS module; a build step bundles and minifies it into the `javascript:` URI format for installation
-
-## Pin anchoring system
-
-Pins are anchored to DOM elements rather than raw pixel coordinates. When a user clicks to place a pin, Pinment:
-
-1. Uses `elementFromPoint` (with the click overlay temporarily hidden via `pointer-events: none`) to identify the DOM element under the click
-2. Generates a stable CSS selector for that element, preferring stable identifiers: `id` > `data-testid` > semantic class names > `nth-of-type`
-3. Stores the click position as offset ratios (0--1) within the element's bounding box
-4. Also stores absolute pixel coordinates as a fallback
-
-On restore, Pinment finds the element by its CSS selector and computes the pin position from the element's current bounding rect + stored offset ratios. This means pins stay in place across different viewport sizes and responsive layouts.
-
-Shared annotations also include compact browser/device metadata so recipients see the reviewer's browser, viewport dimensions, and device type.
-
-This approach draws on techniques used by [Hypothesis](https://web.hypothes.is/) (open-source web annotation tool that pioneered element-anchored web annotations) and browser DevTools CSS selector generation. The selector algorithm filters out framework-generated class names (CSS-in-JS hashes, state classes) and unstable IDs (hex hashes, pure numbers) to produce selectors that are stable across page loads.
-
-## URL state schema (v2)
+## State schema (v2)
 
 ```json
 {
   "v": 2,
-  "url": "https://staging.example.com/about",
+  "url": "https://example.com/page",
   "viewport": 1440,
-  "env": {
-    "ua": "C/130",
-    "vp": [1440, 900],
-    "dt": "d"
-  },
+  "env": { "ua": "C/130", "vp": [1440, 900], "dt": "d" },
   "pins": [
     {
       "id": 1,
-      "s": "#main-content>article>h2:nth-of-type(1)",
-      "ox": 0.45,
-      "oy": 0.3,
-      "fx": 648,
-      "fy": 832,
+      "s": "#main>p:nth-of-type(3)",
+      "ox": 0.45, "oy": 0.3,
+      "fx": 648, "fy": 832,
       "author": "FL",
-      "text": "This heading doesn't match the agreed title",
+      "text": "This heading is wrong",
       "c": "text",
-      "resolved": false
+      "resolved": false,
+      "replies": [
+        { "author": "KH", "text": "Fixed in latest push" }
+      ]
     }
   ]
 }
 ```
 
-Pin fields `c` (category) and `resolved` (status) are optional. Valid categories: `text`, `layout`, `missing`, `question`. When `resolved` is `true`, the pin is visually marked as resolved in both the bookmarklet panel and the hub site viewer.
+### Pin fields
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | number | Unique pin identifier |
+| `s` | string\|null | CSS selector for the anchored DOM element |
+| `ox`, `oy` | number\|null | Offset ratios (0-1) within the element's bounding box |
+| `fx`, `fy` | number | Absolute pixel coordinates (fallback) |
+| `author` | string | Author name (optional) |
+| `text` | string | Comment text |
+| `c` | string | Category: `text`, `layout`, `missing`, or `question` (optional) |
+| `resolved` | boolean | Whether the issue is resolved (optional) |
+| `replies` | array | Reply objects with `author` (optional) and `text` (optional) |
+
+### Selector algorithm
+
+Priority: IDs > `data-testid` attributes > stable class names > `nth-of-type` chains. Selectors are generated at pin-placement time and stored in the URL. If a selector fails to resolve at view time, the pin falls back to pixel coordinates and shows a warning badge.
 
 ## Risks and mitigations
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| URL length limits in older browsers/tools | Annotations truncated or link fails | Compress aggressively; capacity indicator warns as usage grows; Share button disabled when over ~8KB limit with clear messaging; offer fallback export as JSON file (v1.1) |
-| Bookmarklet blocked by CSP | Bookmarklet won't inject on pages with strict Content Security Policy | Document the limitation; most internal/staging sites have relaxed CSP; provide fallback instructions for adding Pinment as a local dev tool |
-| Page layout changes between annotation and review | Pins drift from their intended positions | Pins are anchored to DOM elements via CSS selectors, making them resilient to viewport changes and responsive layouts; fallback pixel coordinates used when element can't be found; browser/device metadata shown so reviewer context is clear |
-| No real-time collaboration | Users can't annotate simultaneously | Out of scope for MVP; share sequential URLs via chat |
-| Recipient needs access to the target page | Can't view pins if page is behind auth or offline | Hub site shows annotations as a text list with coordinates, plus "Open target page" and "Copy share URL" buttons; bookmarklet overlay is the enhanced experience, not the only one |
+| URL length limits | Annotations truncated or link fails | Capacity indicator warns at 60%; share disabled at 100%; JSON export as fallback |
+| CSP-blocked pages | Bookmarklet can't inject | Documented limitation; browser extension planned as future enhancement |
+| DOM changes between annotation and viewing | Pins appear in wrong location | Element-based anchoring with pixel fallback; warning badge when selector fails |
+| No real-time collaboration | Users can't annotate simultaneously | Sequential URL sharing via chat/email; multi-reviewer comparison planned |
 
 ## Success criteria
 
-- A reviewer can annotate a live webpage and share the annotations via URL in under 2 minutes
-- A recipient can view annotation data without installing anything or creating an account (via the hub site)
-- A recipient with access to the target page can see pins overlaid in their original positions via the bookmarklet
+- A reviewer can annotate a live webpage and share the review via URL in under 2 minutes
+- A recipient can view annotations without installing anything or creating an account
 - The tool is maintainable with zero ongoing cost
-
-## Decisions made
-
-| Question | Decision | Rationale |
-|---|---|---|
-| Bookmarklet scoping strategy (Q5) | Namespaced CSS classes (`pinment-*`) | Simpler than shadow DOM; avoids event-handling trade-offs; sufficient isolation for MVP; can upgrade to shadow DOM later if needed |
-| Annotation restore trigger (Q6) | Clipboard pre-fill with manual paste fallback | Attempts `navigator.clipboard.readText()` to pre-fill the share URL; falls back to manual paste if clipboard access is denied; avoids needing the share hash in the target page's URL |
-| Build pipeline | esbuild bundles bookmarklet into `javascript:` URI; Vite plugin injects into hub site HTML | Maintainable source code with proper modules; single minified output for the bookmarklet |
-| CI/CD | GitHub Actions | Runs tests and builds on PRs; deploys to GitHub Pages on merge to main |
-| Testing | Vitest with jsdom | TDD approach; fast test execution; compatible with Vite ecosystem |
-
-## Open questions
-
-1. Should we explore the W3C Web Annotation Data Model for the schema to align with Hypothesis and other tools?
-2. Worth integrating with Teams (e.g. a Teams tab or bot that generates the link)?

@@ -275,6 +275,52 @@ describe('renderViewer', () => {
     expect(btn).not.toBeNull();
     expect(btn.textContent).toContain('Copy share URL');
   });
+
+  it('renders replies for a pin', () => {
+    const state = createState('https://example.com', 1440, [
+      v2Pin({ id: 1, text: 'Issue', replies: [
+        { author: 'KH', text: 'Fixed it' },
+      ]}),
+    ]);
+    renderViewer(state);
+    const repliesContainer = document.querySelector('.review-pin-replies');
+    expect(repliesContainer).not.toBeNull();
+    expect(repliesContainer.textContent).toContain('KH');
+    expect(repliesContainer.textContent).toContain('Fixed it');
+  });
+
+  it('renders multiple replies', () => {
+    const state = createState('https://example.com', 1440, [
+      v2Pin({ id: 1, text: 'Issue', replies: [
+        { author: 'KH', text: 'First' },
+        { author: 'FL', text: 'Second' },
+      ]}),
+    ]);
+    renderViewer(state);
+    const replies = document.querySelectorAll('.review-pin-reply');
+    expect(replies.length).toBe(2);
+  });
+
+  it('does not render replies section when no replies', () => {
+    const state = createState('https://example.com', 1440, [
+      v2Pin({ id: 1, text: 'No replies' }),
+    ]);
+    renderViewer(state);
+    expect(document.querySelector('.review-pin-replies')).toBeNull();
+  });
+
+  it('renders reply without author', () => {
+    const state = createState('https://example.com', 1440, [
+      v2Pin({ id: 1, text: 'Issue', replies: [
+        { text: 'Anonymous reply' },
+      ]}),
+    ]);
+    renderViewer(state);
+    const reply = document.querySelector('.review-pin-reply');
+    expect(reply).not.toBeNull();
+    expect(reply.textContent).toContain('Anonymous reply');
+    expect(reply.querySelector('.review-pin-reply-author')).toBeNull();
+  });
 });
 
 describe('renderError', () => {

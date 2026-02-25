@@ -6,7 +6,7 @@
  * All DOM elements use the pinment- class namespace to avoid conflicts.
  */
 import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal, createMinimizedButton, createExitConfirmModal } from './ui.js';
-import { compress, parseShareUrl, validateState, createShareUrl, estimateUrlSize, exportStateAsJson, SCHEMA_VERSION, MAX_URL_BYTES } from '../state.js';
+import { compress, parseShareUrl, validateState, createShareUrl, estimateUrlSize, exportStateAsJson, importStateFromJson, SCHEMA_VERSION, MAX_URL_BYTES } from '../state.js';
 import { detectEnv } from '../selector.js';
 const STORAGE_KEY_AUTHOR = 'pinment-author';
 const PANEL_ID = 'pinment-panel';
@@ -61,41 +61,127 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   }
 
   // Show welcome modal for restoring annotations or starting fresh
-  const { modal, promise } = createWelcomeModal(parseShareUrl);
+  const { modal, promise } = createWelcomeModal(parseShareUrl, validateState);
   document.body.appendChild(modal);
 
-  promise.then((shareUrl) => {
+  promise.then((result) => {
     // User cancelled – tear down and exit
-    if (shareUrl === false) {
+    if (result === false) {
       deactivate();
       return;
     }
-    if (shareUrl) {
-      const raw = parseShareUrl(shareUrl);
-      const loaded = raw ? validateState(raw) : null;
-      if (loaded) {
-        for (const pin of loaded.pins) {
-          state.pins.push(pin);
-          const el = createPinElement(pin);
-          el.style.pointerEvents = 'auto';
-          el.addEventListener('click', (e) => {
-            e.stopPropagation();
-            scrollToComment(pin.id);
-          });
-          pinContainer.appendChild(el);
-        }
-        state.nextId = loaded.pins.length > 0 ? Math.max(...loaded.pins.map((p) => p.id)) + 1 : 1;
-        if (loaded.env) {
-          // Defer env banner until panel is rendered
-          setTimeout(() => showEnvBanner(loaded.env), 0);
-        }
-      }
+
+    let loaded = null;
+    if (typeof result === 'string') {
+      // Share URL
+      const raw = parseShareUrl(result);
+      loaded = raw ? validateState(raw) : null;
+    } else if (typeof result === 'object' && result !== null) {
+      // Imported state object
+      loaded = validateState(result);
+    }
+
+    if (loaded) {
+      loadState(loaded);
     }
 
     // Build panel and enable pin mode after modal resolves
     renderPanel();
     enablePinMode();
   });
+
+  function loadState(loaded) {
+    for (const pin of loaded.pins) {
+      state.pins.push(pin);
+      addPinToPage(pin);
+    }
+    state.nextId = loaded.pins.length > 0 ? Math.max(...loaded.pins.map((p) => p.id)) + 1 : 1;
+    if (loaded.env) {
+      setTimeout(() => showEnvBanner(loaded.env), 0);
+    }
+  }
+
+  function addPinToPage(pin) {
+    const el = createPinElement(pin);
+    el.style.pointerEvents = 'auto';
+    el.style.cursor = 'grab';
+    makePinDraggable(el, pin);
+    pinContainer.appendChild(el);
+  }
+
+  function makePinDraggable(pinEl, pin) {
+    const DRAG_THRESHOLD = 5;
+    let startX, startY, isDragging;
+
+    pinEl.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      startX = e.clientX;
+      startY = e.clientY;
+      isDragging = false;
+      e.preventDefault();
+
+      const onMove = (e) => {
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if (!isDragging && Math.abs(dx) + Math.abs(dy) > DRAG_THRESHOLD) {
+          isDragging = true;
+          pinEl.classList.add('pinment-pin-dragging');
+        }
+        if (isDragging) {
+          const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+          const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+          pinEl.style.left = `${e.clientX + scrollX}px`;
+          pinEl.style.top = `${e.clientY + scrollY}px`;
+        }
+      };
+
+      const onUp = (e) => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        pinEl.classList.remove('pinment-pin-dragging');
+
+        if (isDragging) {
+          const overlay = document.getElementById(OVERLAY_ID);
+          const pos = calculatePinPosition(e.clientX, e.clientY, overlay, pinContainer);
+          pin.s = pos.s;
+          pin.ox = pos.ox;
+          pin.oy = pos.oy;
+          pin.fx = pos.fx;
+          pin.fy = pos.fy;
+
+          // Snap to element-based position
+          if (pos.s) {
+            try {
+              const target = document.querySelector(pos.s);
+              if (target) {
+                const rect = target.getBoundingClientRect();
+                const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+                const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+                pinEl.style.left = `${rect.left + scrollX + pos.ox * rect.width}px`;
+                pinEl.style.top = `${rect.top + scrollY + pos.oy * rect.height}px`;
+              }
+            } catch { /* invalid selector */ }
+          }
+
+          pinEl.classList.remove('pinment-pin-fallback');
+          if (pos.s) {
+            try {
+              if (!document.querySelector(pos.s)) pinEl.classList.add('pinment-pin-fallback');
+            } catch {
+              pinEl.classList.add('pinment-pin-fallback');
+            }
+          }
+
+          updateCapacity(document.getElementById(PANEL_ID));
+        } else {
+          scrollToComment(pin.id);
+        }
+      };
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
 
   // Click handler for adding pins
   function enablePinMode() {
@@ -119,14 +205,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
         text: '',
       };
       state.pins.push(pin);
-
-      const el = createPinElement(pin);
-      el.style.pointerEvents = 'auto';
-      el.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        scrollToComment(pin.id);
-      });
-      pinContainer.appendChild(el);
+      addPinToPage(pin);
 
       // Remove overlay after placing pin
       overlay.remove();
@@ -152,6 +231,8 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       onCategoryChange: handleCategoryChange,
       onResolveToggle: handleResolveToggle,
       onExport: handleExport,
+      onReply: handleReply,
+      onImport: handleImport,
     });
     panel.id = PANEL_ID;
 
@@ -214,6 +295,46 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       pinEl.classList.toggle('pinment-pin-resolved', !!pin?.resolved);
     }
     renderPanel();
+  }
+
+  function handleReply(pinId, text, author) {
+    const pin = state.pins.find((p) => p.id === pinId);
+    if (!pin) return;
+    if (!pin.replies) pin.replies = [];
+    pin.replies.push({ author, text });
+    if (author) {
+      authorName = author;
+      try { localStorage.setItem(STORAGE_KEY_AUTHOR, author); } catch { /* */ }
+    }
+    renderPanel();
+  }
+
+  function handleImport() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json,application/json';
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const loaded = importStateFromJson(reader.result);
+        if (!loaded) {
+          alert('Invalid Pinment JSON file.');
+          return;
+        }
+        if (state.pins.length > 0 && !confirm('This will replace your current annotations. Continue?')) {
+          return;
+        }
+        // Clear existing pins
+        state.pins = [];
+        pinContainer.innerHTML = '';
+        loadState(loaded);
+        renderPanel();
+      };
+      reader.readAsText(file);
+    });
+    fileInput.click();
   }
 
   function handleExport() {
