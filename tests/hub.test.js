@@ -52,16 +52,13 @@ describe('parseHashData', () => {
     expect(parseHashData('#data=corrupted-garbage')).toBeNull();
   });
 
-  it('migrates v1 data to v2 on parse', () => {
-    // Manually create v1 compressed data
+  it('rejects v1 data', () => {
     const v1State = { v: 1, url: 'https://example.com', viewport: 1440, pins: [
       { id: 1, x: 0.5, y: 200, author: 'FL', text: 'Test' },
     ]};
     const hash = `#data=${compress(v1State)}`;
     const result = parseHashData(hash);
-    expect(result.v).toBe(2);
-    expect(result.pins[0].fx).toBe(720);
-    expect(result.pins[0].s).toBeNull();
+    expect(result).toBeNull();
   });
 });
 

@@ -6,7 +6,6 @@ import {
   createShareUrl,
   parseShareUrl,
   validateState,
-  migrateV1toV2,
   estimateUrlSize,
   SCHEMA_VERSION,
   MAX_URL_BYTES,
@@ -62,9 +61,6 @@ describe('compress / decompress', () => {
   it('produces a URL-safe string', () => {
     const state = createState('https://example.com', 1440);
     const compressed = compress(state);
-    // lz-string's compressToEncodedURIComponent uses a custom base64 alphabet
-    // that may include + which is safe in fragments but encoded by encodeURIComponent.
-    // Verify it roundtrips correctly through a URL fragment.
     expect(typeof compressed).toBe('string');
     expect(compressed.length).toBeGreaterThan(0);
     const roundtripped = decompress(compressed);
@@ -138,67 +134,10 @@ describe('createShareUrl / parseShareUrl', () => {
   });
 });
 
-describe('migrateV1toV2', () => {
-  it('converts v1 pins to v2 format', () => {
-    const v1 = { v: 1, url: 'https://example.com', viewport: 1440, pins: [
-      { id: 1, x: 0.5, y: 100, author: 'FL', text: 'Test' },
-    ]};
-    const v2 = migrateV1toV2(v1);
-    expect(v2.v).toBe(2);
-    expect(v2.env).toBeNull();
-    expect(v2.pins[0]).toEqual({
-      id: 1, s: null, ox: null, oy: null, fx: 720, fy: 100, author: 'FL', text: 'Test',
-    });
-  });
-
-  it('computes fx from x * viewport', () => {
-    const v1 = { v: 1, url: 'x', viewport: 800, pins: [
-      { id: 1, x: 0.25, y: 300, author: '', text: '' },
-    ]};
-    const v2 = migrateV1toV2(v1);
-    expect(v2.pins[0].fx).toBe(200);
-    expect(v2.pins[0].fy).toBe(300);
-  });
-
-  it('sets s, ox, oy to null', () => {
-    const v1 = { v: 1, url: 'x', viewport: 1440, pins: [
-      { id: 1, x: 0.5, y: 100, text: 'test' },
-    ]};
-    const v2 = migrateV1toV2(v1);
-    expect(v2.pins[0].s).toBeNull();
-    expect(v2.pins[0].ox).toBeNull();
-    expect(v2.pins[0].oy).toBeNull();
-  });
-
-  it('defaults author to empty string if undefined', () => {
-    const v1 = { v: 1, url: 'x', viewport: 1440, pins: [
-      { id: 1, x: 0.5, y: 100, text: 'test' },
-    ]};
-    const v2 = migrateV1toV2(v1);
-    expect(v2.pins[0].author).toBe('');
-  });
-
-  it('returns non-v1 state unchanged', () => {
-    const s = { v: 2, url: 'x', viewport: 1440, pins: [] };
-    expect(migrateV1toV2(s)).toBe(s);
-  });
-});
-
 describe('validateState', () => {
   it('accepts a valid v2 state object', () => {
     const state = createState('https://example.com', 1440, [v2Pin()]);
     expect(validateState(state)).toEqual(state);
-  });
-
-  it('accepts v1 state and returns migrated v2', () => {
-    const v1 = { v: 1, url: 'https://example.com', viewport: 1440, pins: [
-      { id: 1, x: 0.5, y: 100, author: 'FL', text: 'Test' },
-    ]};
-    const result = validateState(v1);
-    expect(result.v).toBe(2);
-    expect(result.pins[0].s).toBeNull();
-    expect(result.pins[0].fx).toBe(720);
-    expect(result.pins[0].fy).toBe(100);
   });
 
   it('rejects null/undefined', () => {
@@ -208,43 +147,23 @@ describe('validateState', () => {
 
   it('rejects wrong schema version', () => {
     expect(validateState({ v: 99, url: 'x', viewport: 1440, pins: [] })).toBeNull();
+    expect(validateState({ v: 1, url: 'x', viewport: 1440, pins: [] })).toBeNull();
   });
 
   it('rejects missing url', () => {
-    expect(validateState({ v: 1, viewport: 1440, pins: [] })).toBeNull();
     expect(validateState({ v: 2, viewport: 1440, pins: [] })).toBeNull();
   });
 
   it('rejects missing viewport', () => {
-    expect(validateState({ v: 1, url: 'x', pins: [] })).toBeNull();
     expect(validateState({ v: 2, url: 'x', pins: [] })).toBeNull();
   });
 
   it('rejects non-array pins', () => {
-    expect(validateState({ v: 1, url: 'x', viewport: 1440, pins: 'not array' })).toBeNull();
     expect(validateState({ v: 2, url: 'x', viewport: 1440, pins: 'not array' })).toBeNull();
   });
 
-  it('rejects v1 pin with x outside 0-1', () => {
-    const state = { v: 1, url: 'x', viewport: 1440, pins: [{ id: 1, x: 1.5, y: 100, author: '', text: '' }] };
-    expect(validateState(state)).toBeNull();
-  });
-
-  it('rejects v1 pin with negative x', () => {
-    const state = { v: 1, url: 'x', viewport: 1440, pins: [{ id: 1, x: -0.1, y: 100, author: '', text: '' }] };
-    expect(validateState(state)).toBeNull();
-  });
-
   it('rejects pin with missing text', () => {
-    expect(validateState({ v: 1, url: 'x', viewport: 1440, pins: [{ id: 1, x: 0.5, y: 100, author: '' }] })).toBeNull();
     expect(validateState({ v: 2, url: 'x', viewport: 1440, pins: [{ id: 1, fx: 720, fy: 100, author: '' }] })).toBeNull();
-  });
-
-  it('accepts v1 pins with empty text and migrates', () => {
-    const state = { v: 1, url: 'x', viewport: 1440, pins: [{ id: 1, x: 0.5, y: 100, author: '', text: '' }] };
-    const result = validateState(state);
-    expect(result.v).toBe(2);
-    expect(result.pins[0].fx).toBe(720);
   });
 
   it('accepts v2 state with no pins', () => {
@@ -252,23 +171,17 @@ describe('validateState', () => {
     expect(validateState(state)).toEqual(state);
   });
 
-  it('accepts v1 state with no pins and migrates', () => {
-    const state = { v: 1, url: 'https://example.com', viewport: 1440, pins: [] };
-    const result = validateState(state);
-    expect(result.v).toBe(2);
-    expect(result.env).toBeNull();
-  });
-
   it('rejects pin with non-string author', () => {
-    expect(validateState({ v: 1, url: 'x', viewport: 1440, pins: [{ id: 1, x: 0.5, y: 100, author: 42, text: '' }] })).toBeNull();
+    expect(validateState({ v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 720, fy: 100, author: 42, text: '' },
+    ] })).toBeNull();
   });
 
-  it('accepts v1 pin with undefined author and migrates', () => {
-    const state = { v: 1, url: 'x', viewport: 1440, pins: [{ id: 1, x: 0.5, y: 100, text: 'no author' }] };
-    const result = validateState(state);
-    expect(result.v).toBe(2);
-    expect(result.pins[0].author).toBe('');
-    expect(result.pins[0].text).toBe('no author');
+  it('accepts pin with undefined author', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 720, fy: 100, text: 'no author' },
+    ]};
+    expect(validateState(state)).toEqual(state);
   });
 
   it('rejects v2 pin with ox outside 0-1', () => {
