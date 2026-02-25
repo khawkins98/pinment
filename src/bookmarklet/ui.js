@@ -806,6 +806,13 @@ export function buildStyles() {
   background: #fffff0;
   border-bottom: 1px solid #fefcbf;
 }
+.pinment-btn-spinner {
+  display:inline-block; width:12px; height:12px;
+  border:2px solid #cbd5e0; border-top-color:#3182ce;
+  border-radius:50%; animation:pinment-spin 0.6s linear infinite;
+  vertical-align:-1px;
+}
+@keyframes pinment-spin { to { transform:rotate(360deg) } }
 `;
 }
 
@@ -935,7 +942,7 @@ export function createPinElement(pin) {
 }
 
 export function createPanel(pins, options = {}) {
-  const { editable = false, editMode = true, onEditModeToggle, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport, onReply, onImport, onStartNew, filters = null, onFilterChange = null, onPinHover = null, onPinHoverEnd = null } = options;
+  const { editable = false, editMode = true, onEditModeToggle, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport, onExportPdf, onReply, onImport, onStartNew, filters = null, onFilterChange = null, onPinHover = null, onPinHoverEnd = null } = options;
 
   const panel = document.createElement('div');
   panel.className = 'pinment-panel';
@@ -1048,6 +1055,13 @@ export function createPanel(pins, options = {}) {
   exportBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M8 2v8"/><path d="M4 8l4 4 4-4"/></svg>';
   if (onExport) exportBtn.addEventListener('click', onExport);
   footer.appendChild(exportBtn);
+
+  const pdfBtn = document.createElement('button');
+  pdfBtn.className = 'pinment-btn pinment-btn-export-pdf';
+  pdfBtn.title = 'Export as PDF';
+  pdfBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="1" width="12" height="14" rx="1"/><path d="M5 5h6"/><path d="M5 8h6"/><path d="M5 11h3"/></svg>';
+  if (onExportPdf) pdfBtn.addEventListener('click', onExportPdf);
+  footer.appendChild(pdfBtn);
 
   const importBtn = document.createElement('button');
   importBtn.className = 'pinment-btn pinment-btn-import';

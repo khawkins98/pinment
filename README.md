@@ -2,7 +2,7 @@
 
 Pin comments to any live webpage. Share the annotations as a single URL. No backend, no accounts, no database.
 
-**Try it:** [khawkins98.github.io/pinment](https://khawkins98.github.io/pinment/) | **Source:** [github.com/khawkins98/pinment](https://github.com/khawkins98/pinment)
+**Try it:** [khawkins98.github.io/pinment](https://khawkins98.github.io/pinment/) | **Blog post:** [Introducing Pinment](https://www.allaboutken.com/posts/20260225-introducing-pinment/)
 
 ## How it works
 
@@ -28,6 +28,7 @@ The URL *is* the review. Recipients open it, visit the page, click the bookmarkl
 | Dynamic loading | Bookmarklet is a tiny loader (~200 chars) that fetches the full script from the host site, staying well under browser URL limits |
 | Version display | Panel footer shows current version and release date |
 | Filter & sort | Filter pins by category, status, or author; sort by pin number, category, or status |
+| PDF export | Generate a PDF with full-page screenshot, pin markers, and comment appendix (CDN-loaded libraries) |
 | Mobile warning | Warns mobile users that Pinment is desktop-optimized; option to continue anyway |
 | Works anywhere | Bookmarklet runs on any page you can visit |
 
@@ -48,6 +49,7 @@ src/selector.js               CSS selector generation, environment detection
 src/version.js                Version and release date constants
 src/bookmarklet/index.js      Bookmarklet entry point (IIFE)
 src/bookmarklet/ui.js         Pin elements, comment panel, modals, styles
+src/bookmarklet/pdf-export.js PDF export (html2canvas + jsPDF, CDN-loaded)
 js/app.js                     Hub site logic (viewer, import)
 css/style.css                 Hub site styles
 index.html                    Landing page and annotation viewer

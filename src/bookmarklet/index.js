@@ -7,6 +7,7 @@
  */
 import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal, createMobileWarningModal, createMinimizedButton, createExitConfirmModal, repositionPin, highlightPinTarget, clearPinHighlight } from './ui.js';
 import { compress, decompress, parseShareUrl, validateState, createShareUrl, estimateUrlSize, exportStateAsJson, importStateFromJson, SCHEMA_VERSION, MAX_URL_BYTES } from '../state.js';
+import { exportPdf } from './pdf-export.js';
 import { detectEnv } from '../selector.js';
 const STORAGE_KEY_AUTHOR = 'pinment-author';
 const PANEL_ID = 'pinment-panel';
@@ -326,6 +327,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       onCategoryChange: handleCategoryChange,
       onResolveToggle: handleResolveToggle,
       onExport: handleExport,
+      onExportPdf: handleExportPdf,
       onReply: handleReply,
       onImport: handleImport,
       onStartNew: handleStartNew,
@@ -460,6 +462,30 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     a.download = `pinment-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function handleExportPdf() {
+    const panel = document.getElementById(PANEL_ID);
+    const pdfBtn = panel && panel.querySelector('.pinment-btn-export-pdf');
+    const originalContent = pdfBtn ? pdfBtn.innerHTML : '';
+
+    function setProgress(msg) {
+      if (pdfBtn) {
+        pdfBtn.innerHTML = '<span class="pinment-btn-spinner"></span> ' + msg;
+        pdfBtn.disabled = true;
+      }
+    }
+
+    try {
+      await exportPdf(state.pins, buildStateData(), setProgress);
+    } catch (err) {
+      alert(err.message || 'PDF export failed.');
+    } finally {
+      if (pdfBtn) {
+        pdfBtn.innerHTML = originalContent;
+        pdfBtn.disabled = false;
+      }
+    }
   }
 
   function handleToggle() {
