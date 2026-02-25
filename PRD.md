@@ -44,10 +44,10 @@ Pinment is a bookmarklet-driven annotation tool backed by a static hub site host
 
 ### Should have (v1.1)
 
-- **FR-11** Pin categories: label pins by type (text issue, layout issue, missing content, question)
-- **FR-12** Pin status: mark individual comments as resolved/open
-- **FR-13** Export: download annotations as a JSON file for archival or import
-- **FR-14** Multiple viewports: store annotations per viewport width so desktop and mobile reviews stay separate
+- [x] **FR-11** Pin categories: label pins by type (text issue, layout issue, missing content, question)
+- [x] **FR-12** Pin status: mark individual comments as resolved/open
+- [x] **FR-13** Export: download annotations as a JSON file for archival or import
+- ~~**FR-14** Multiple viewports: store annotations per viewport width so desktop and mobile reviews stay separate~~ — Addressed by element-based anchoring (pins stay on their target element across viewport sizes) and browser/device metadata (recipients see the original reviewer's viewport context)
 
 ### Could have (future)
 
@@ -79,8 +79,6 @@ The element-based anchoring approach draws on techniques from:
 
 - **[Hypothesis](https://web.hypothes.is/)** -- An open-source web annotation tool that pioneered element-anchored annotations on arbitrary webpages. Hypothesis uses XPath and text-based anchoring; Pinment uses CSS selectors with offset ratios for a more compact URL representation.
 - **Browser DevTools** -- Chrome, Firefox, and Edge all implement CSS selector generation (used in "Copy selector") with similar strategies of preferring IDs and stable attributes over positional selectors.
-
-The final product should include a visible acknowledgement of these projects and the URL-as-state concept (e.g. an "about" section or footer linking to Buffertab, Inkash, and the original blog posts).
 
 ## Technical approach
 
@@ -128,11 +126,15 @@ This approach draws on techniques used by [Hypothesis](https://web.hypothes.is/)
       "fx": 648,
       "fy": 832,
       "author": "FL",
-      "text": "This heading doesn't match the agreed title"
+      "text": "This heading doesn't match the agreed title",
+      "c": "text",
+      "resolved": false
     }
   ]
 }
 ```
+
+Pin fields `c` (category) and `resolved` (status) are optional. Valid categories: `text`, `layout`, `missing`, `question`. When `resolved` is `true`, the pin is visually marked as resolved in both the bookmarklet panel and the hub site viewer.
 
 ## Risks and mitigations
 

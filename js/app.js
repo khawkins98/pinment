@@ -6,7 +6,7 @@
  * 2. If the URL contains a #data= fragment, decodes and displays the annotation
  *    data so the user can see the review even without visiting the target page
  */
-import { decompress, validateState } from '../src/state.js';
+import { decompress, validateState, exportStateAsJson } from '../src/state.js';
 
 export function parseHashData(hash) {
   if (!hash || !hash.startsWith('#data=')) return null;
@@ -101,7 +101,30 @@ export function renderViewer(state) {
   });
   actions.appendChild(copyBtn);
 
+  // Export button
+  const exportBtn = document.createElement('button');
+  exportBtn.className = 'viewer-btn viewer-btn-secondary';
+  exportBtn.textContent = 'Export JSON';
+  exportBtn.addEventListener('click', () => {
+    const json = exportStateAsJson(state);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pinment-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  actions.appendChild(exportBtn);
+
   meta.appendChild(actions);
+
+  const CATEGORY_LABELS = {
+    text: 'Text issue',
+    layout: 'Layout issue',
+    missing: 'Missing content',
+    question: 'Question',
+  };
 
   // Render pin list
   pinsList.innerHTML = '';
@@ -109,6 +132,7 @@ export function renderViewer(state) {
     const item = document.createElement('div');
     item.setAttribute('role', 'listitem');
     item.className = 'review-pin';
+    if (pin.resolved) item.classList.add('review-pin-resolved');
 
     const header = document.createElement('div');
     header.className = 'review-pin-header';
@@ -117,11 +141,26 @@ export function renderViewer(state) {
     badge.className = 'review-pin-number';
     badge.textContent = String(pin.id);
 
+    header.appendChild(badge);
+
+    if (pin.c && CATEGORY_LABELS[pin.c]) {
+      const catBadge = document.createElement('span');
+      catBadge.className = `review-pin-category review-pin-category-${pin.c}`;
+      catBadge.textContent = CATEGORY_LABELS[pin.c];
+      header.appendChild(catBadge);
+    }
+
+    if (pin.resolved) {
+      const resolvedBadge = document.createElement('span');
+      resolvedBadge.className = 'review-pin-resolved-badge';
+      resolvedBadge.textContent = 'Resolved';
+      header.appendChild(resolvedBadge);
+    }
+
     const author = document.createElement('span');
     author.className = 'review-pin-author';
     author.textContent = pin.author ? ` by ${pin.author}` : '';
 
-    header.appendChild(badge);
     header.appendChild(author);
     item.appendChild(header);
 

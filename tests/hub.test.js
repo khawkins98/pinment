@@ -204,6 +204,60 @@ describe('renderViewer', () => {
     expect(() => renderViewer(state)).not.toThrow();
   });
 
+  it('shows category badge for pins with a category', () => {
+    const state = createState('https://example.com', 1440, [
+      v2Pin({ id: 1, text: 'Fix this', c: 'text' }),
+    ]);
+    renderViewer(state);
+    const catBadge = document.querySelector('.review-pin-category');
+    expect(catBadge).not.toBeNull();
+    expect(catBadge.textContent).toBe('Text issue');
+    expect(catBadge.classList.contains('review-pin-category-text')).toBe(true);
+  });
+
+  it('does not show category badge when no category', () => {
+    const state = createState('https://example.com', 1440, [
+      v2Pin({ id: 1, text: 'No category' }),
+    ]);
+    renderViewer(state);
+    expect(document.querySelector('.review-pin-category')).toBeNull();
+  });
+
+  it('shows resolved badge for resolved pins', () => {
+    const state = createState('https://example.com', 1440, [
+      v2Pin({ id: 1, text: 'Done', resolved: true }),
+    ]);
+    renderViewer(state);
+    const badge = document.querySelector('.review-pin-resolved-badge');
+    expect(badge).not.toBeNull();
+    expect(badge.textContent).toBe('Resolved');
+  });
+
+  it('applies resolved class to resolved pin items', () => {
+    const state = createState('https://example.com', 1440, [
+      v2Pin({ id: 1, text: 'Done', resolved: true }),
+    ]);
+    renderViewer(state);
+    const item = document.querySelector('.review-pin');
+    expect(item.classList.contains('review-pin-resolved')).toBe(true);
+  });
+
+  it('does not show resolved badge for open pins', () => {
+    const state = createState('https://example.com', 1440, [
+      v2Pin({ id: 1, text: 'Open' }),
+    ]);
+    renderViewer(state);
+    expect(document.querySelector('.review-pin-resolved-badge')).toBeNull();
+  });
+
+  it('renders export JSON button', () => {
+    const state = createState('https://example.com', 1440, []);
+    renderViewer(state);
+    const buttons = document.querySelectorAll('.viewer-btn-secondary');
+    const exportBtn = Array.from(buttons).find(b => b.textContent.includes('Export'));
+    expect(exportBtn).not.toBeNull();
+  });
+
   it('renders "Open target page" link pointing to state url', () => {
     const state = createState('https://staging.example.com/about', 1440, []);
     renderViewer(state);

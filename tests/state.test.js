@@ -7,8 +7,10 @@ import {
   parseShareUrl,
   validateState,
   estimateUrlSize,
+  exportStateAsJson,
   SCHEMA_VERSION,
   MAX_URL_BYTES,
+  PIN_CATEGORIES,
 } from '../src/state.js';
 
 // Helper to create v2-format pins
@@ -210,6 +212,82 @@ describe('validateState', () => {
     expect(validateState('string')).toBeNull();
     expect(validateState(42)).toBeNull();
     expect(validateState(true)).toBeNull();
+  });
+
+  it('accepts pin with valid category', () => {
+    for (const c of PIN_CATEGORIES) {
+      const state = { v: 2, url: 'x', viewport: 1440, pins: [
+        { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test', c },
+      ]};
+      expect(validateState(state)).toEqual(state);
+    }
+  });
+
+  it('rejects pin with invalid category', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test', c: 'invalid' },
+    ]};
+    expect(validateState(state)).toBeNull();
+  });
+
+  it('accepts pin without category', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test' },
+    ]};
+    expect(validateState(state)).toEqual(state);
+  });
+
+  it('accepts pin with resolved=true', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test', resolved: true },
+    ]};
+    expect(validateState(state)).toEqual(state);
+  });
+
+  it('accepts pin with resolved=false', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test', resolved: false },
+    ]};
+    expect(validateState(state)).toEqual(state);
+  });
+
+  it('rejects pin with non-boolean resolved', () => {
+    const state = { v: 2, url: 'x', viewport: 1440, pins: [
+      { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 100, text: 'test', resolved: 'yes' },
+    ]};
+    expect(validateState(state)).toBeNull();
+  });
+});
+
+describe('PIN_CATEGORIES', () => {
+  it('contains exactly 4 categories', () => {
+    expect(PIN_CATEGORIES).toEqual(['text', 'layout', 'missing', 'question']);
+  });
+});
+
+describe('exportStateAsJson', () => {
+  it('returns valid JSON string', () => {
+    const state = createState('https://example.com', 1440, [v2Pin()]);
+    const json = exportStateAsJson(state);
+    expect(typeof json).toBe('string');
+    const parsed = JSON.parse(json);
+    expect(parsed).toEqual(state);
+  });
+
+  it('preserves category and resolved fields', () => {
+    const state = createState('https://example.com', 1440, [
+      v2Pin({ id: 1, c: 'text', resolved: true }),
+    ]);
+    const json = exportStateAsJson(state);
+    const parsed = JSON.parse(json);
+    expect(parsed.pins[0].c).toBe('text');
+    expect(parsed.pins[0].resolved).toBe(true);
+  });
+
+  it('produces pretty-printed output', () => {
+    const state = createState('https://example.com', 1440);
+    const json = exportStateAsJson(state);
+    expect(json).toContain('\n');
   });
 });
 

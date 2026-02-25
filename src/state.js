@@ -3,6 +3,8 @@ import LZString from 'lz-string';
 export const SCHEMA_VERSION = 2;
 export const MAX_URL_BYTES = 8000;
 
+export const PIN_CATEGORIES = ['text', 'layout', 'missing', 'question'];
+
 const DEFAULT_BASE_URL = 'https://khawkins98.github.io/pinment/';
 
 export function createState(url, viewport, pins = [], env = null) {
@@ -68,6 +70,8 @@ export function validateState(state) {
     if (typeof pin.fy !== 'number') return null;
     if (typeof pin.text !== 'string') return null;
     if (pin.author !== undefined && typeof pin.author !== 'string') return null;
+    if (pin.c !== undefined && !PIN_CATEGORIES.includes(pin.c)) return null;
+    if (pin.resolved !== undefined && typeof pin.resolved !== 'boolean') return null;
   }
 
   return state;
@@ -76,4 +80,8 @@ export function validateState(state) {
 export function estimateUrlSize(state, baseUrl = DEFAULT_BASE_URL) {
   const url = createShareUrl(state, baseUrl);
   return new TextEncoder().encode(url).length;
+}
+
+export function exportStateAsJson(state) {
+  return JSON.stringify(state, null, 2);
 }

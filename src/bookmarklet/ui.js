@@ -534,6 +534,58 @@ export function buildStyles() {
   border-bottom: 1px solid #bfdbfe;
   flex-shrink: 0;
 }
+.pinment-category-select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 13px;
+  margin-top: 4px;
+  box-sizing: border-box;
+  background: #fff;
+  color: #2d3748;
+}
+.pinment-category-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+.pinment-category-text { background: #dbeafe; color: #1e40af; }
+.pinment-category-layout { background: #ede9fe; color: #5b21b6; }
+.pinment-category-missing { background: #ffedd5; color: #9a3412; }
+.pinment-category-question { background: #d1fae5; color: #065f46; }
+.pinment-btn-resolve {
+  font-size: 12px;
+  padding: 3px 8px;
+}
+.pinment-btn-resolve-open {
+  color: #38a169;
+  border-color: #c6f6d5;
+}
+.pinment-btn-resolve-resolved {
+  background: #f0fff4;
+  color: #276749;
+  border-color: #9ae6b4;
+}
+.pinment-comment-resolved {
+  opacity: 0.6;
+}
+.pinment-comment-resolved .pinment-comment-text {
+  text-decoration: line-through;
+}
+.pinment-pin-resolved {
+  opacity: 0.5;
+  background: #a0aec0;
+}
+.pinment-btn-export {
+  font-size: 12px;
+  padding: 6px 10px;
+}
 .pinment-btn-share {
   display: flex;
   align-items: center;
@@ -642,11 +694,15 @@ export function createPinElement(pin) {
     }
   }
 
+  if (pin.resolved) {
+    el.classList.add('pinment-pin-resolved');
+  }
+
   return el;
 }
 
 export function createPanel(pins, options = {}) {
-  const { editable = false, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete } = options;
+  const { editable = false, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport } = options;
 
   const panel = document.createElement('div');
   panel.className = 'pinment-panel';
@@ -690,7 +746,7 @@ export function createPanel(pins, options = {}) {
   body.className = 'pinment-panel-body';
 
   for (const pin of pins) {
-    const comment = createCommentItem(pin, editable, { onSave, onDelete });
+    const comment = createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, onResolveToggle });
     body.appendChild(comment);
   }
 
@@ -706,6 +762,13 @@ export function createPanel(pins, options = {}) {
   if (onShare) shareBtn.addEventListener('click', onShare);
   footer.appendChild(shareBtn);
 
+  const exportBtn = document.createElement('button');
+  exportBtn.className = 'pinment-btn pinment-btn-export';
+  exportBtn.title = 'Export as JSON';
+  exportBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M8 2v8"/><path d="M4 8l4 4 4-4"/></svg>';
+  if (onExport) exportBtn.addEventListener('click', onExport);
+  footer.appendChild(exportBtn);
+
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'pinment-btn pinment-btn-toggle';
   toggleBtn.title = 'Toggle pin visibility';
@@ -718,9 +781,17 @@ export function createPanel(pins, options = {}) {
   return panel;
 }
 
-function createCommentItem(pin, editable, { onSave, onDelete } = {}) {
+const CATEGORY_LABELS = {
+  text: 'Text issue',
+  layout: 'Layout issue',
+  missing: 'Missing content',
+  question: 'Question',
+};
+
+function createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, onResolveToggle } = {}) {
   const item = document.createElement('div');
   item.className = 'pinment-comment';
+  if (pin.resolved) item.classList.add('pinment-comment-resolved');
   item.dataset.pinmentId = pin.id;
 
   const header = document.createElement('div');
@@ -735,6 +806,14 @@ function createCommentItem(pin, editable, { onSave, onDelete } = {}) {
   author.textContent = pin.author || '';
 
   header.appendChild(badge);
+
+  if (pin.c && CATEGORY_LABELS[pin.c]) {
+    const catBadge = document.createElement('span');
+    catBadge.className = `pinment-category-badge pinment-category-${pin.c}`;
+    catBadge.textContent = CATEGORY_LABELS[pin.c];
+    header.appendChild(catBadge);
+  }
+
   header.appendChild(author);
   item.appendChild(header);
 
@@ -752,6 +831,26 @@ function createCommentItem(pin, editable, { onSave, onDelete } = {}) {
     authorInput.placeholder = 'Your name (optional)';
     item.appendChild(authorInput);
 
+    const categorySelect = document.createElement('select');
+    categorySelect.className = 'pinment-category-select';
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = 'Category (optional)';
+    categorySelect.appendChild(defaultOpt);
+    for (const [value, label] of Object.entries(CATEGORY_LABELS)) {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = label;
+      if (pin.c === value) opt.selected = true;
+      categorySelect.appendChild(opt);
+    }
+    if (onCategoryChange) {
+      categorySelect.addEventListener('change', () => {
+        onCategoryChange(pin.id, categorySelect.value || undefined);
+      });
+    }
+    item.appendChild(categorySelect);
+
     const actions = document.createElement('div');
     actions.className = 'pinment-comment-actions';
 
@@ -764,6 +863,14 @@ function createCommentItem(pin, editable, { onSave, onDelete } = {}) {
       });
     }
     actions.appendChild(saveBtn);
+
+    const resolveBtn = document.createElement('button');
+    resolveBtn.className = `pinment-btn pinment-btn-resolve ${pin.resolved ? 'pinment-btn-resolve-resolved' : 'pinment-btn-resolve-open'}`;
+    resolveBtn.textContent = pin.resolved ? 'Resolved' : 'Resolve';
+    if (onResolveToggle) {
+      resolveBtn.addEventListener('click', () => onResolveToggle(pin.id));
+    }
+    actions.appendChild(resolveBtn);
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'pinment-btn pinment-btn-delete';

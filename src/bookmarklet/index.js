@@ -6,7 +6,7 @@
  * All DOM elements use the pinment- class namespace to avoid conflicts.
  */
 import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal, createMinimizedButton, createExitConfirmModal } from './ui.js';
-import { compress, parseShareUrl, validateState, createShareUrl, estimateUrlSize, SCHEMA_VERSION, MAX_URL_BYTES } from '../state.js';
+import { compress, parseShareUrl, validateState, createShareUrl, estimateUrlSize, exportStateAsJson, SCHEMA_VERSION, MAX_URL_BYTES } from '../state.js';
 import { detectEnv } from '../selector.js';
 const STORAGE_KEY_AUTHOR = 'pinment-author';
 const PANEL_ID = 'pinment-panel';
@@ -149,6 +149,9 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       onExit: handleExit,
       onSave: handleSave,
       onDelete: handleDelete,
+      onCategoryChange: handleCategoryChange,
+      onResolveToggle: handleResolveToggle,
+      onExport: handleExport,
     });
     panel.id = PANEL_ID;
 
@@ -185,6 +188,44 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     const pinEl = pinContainer.querySelector(`[data-pinment-id="${pinId}"]`);
     if (pinEl) pinEl.remove();
     renderPanel();
+  }
+
+  function handleCategoryChange(pinId, category) {
+    const pin = state.pins.find((p) => p.id === pinId);
+    if (pin) {
+      if (category) {
+        pin.c = category;
+      } else {
+        delete pin.c;
+      }
+    }
+    updateCapacity(document.getElementById(PANEL_ID));
+  }
+
+  function handleResolveToggle(pinId) {
+    const pin = state.pins.find((p) => p.id === pinId);
+    if (pin) {
+      pin.resolved = !pin.resolved;
+      if (!pin.resolved) delete pin.resolved;
+    }
+    // Update pin element appearance
+    const pinEl = pinContainer.querySelector(`[data-pinment-id="${pinId}"]`);
+    if (pinEl) {
+      pinEl.classList.toggle('pinment-pin-resolved', !!pin?.resolved);
+    }
+    renderPanel();
+  }
+
+  function handleExport() {
+    const data = buildStateData();
+    const json = exportStateAsJson(data);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pinment-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function handleToggle() {

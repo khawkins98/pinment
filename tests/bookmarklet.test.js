@@ -121,6 +121,18 @@ describe('createPinElement', () => {
     const el = createPinElement(pin);
     expect(el.classList.contains('pinment-pin-fallback')).toBe(false);
   });
+
+  it('adds resolved class when pin is resolved', () => {
+    const pin = { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 200, author: '', text: '', resolved: true };
+    const el = createPinElement(pin);
+    expect(el.classList.contains('pinment-pin-resolved')).toBe(true);
+  });
+
+  it('does not add resolved class when pin is not resolved', () => {
+    const pin = { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 200, author: '', text: '' };
+    const el = createPinElement(pin);
+    expect(el.classList.contains('pinment-pin-resolved')).toBe(false);
+  });
 });
 
 describe('createPanel', () => {
@@ -291,6 +303,106 @@ describe('createPanel', () => {
     const panel = createPanel(pins);
     const comment = panel.querySelector('.pinment-comment');
     expect(comment.dataset.pinmentId).toBe('4');
+  });
+
+  it('renders category selector in editable mode', () => {
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '' }];
+    const panel = createPanel(pins, { editable: true });
+    const select = panel.querySelector('.pinment-category-select');
+    expect(select).not.toBeNull();
+    expect(select.options.length).toBe(5); // default + 4 categories
+  });
+
+  it('pre-selects the current category', () => {
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '', c: 'layout' }];
+    const panel = createPanel(pins, { editable: true });
+    const select = panel.querySelector('.pinment-category-select');
+    expect(select.value).toBe('layout');
+  });
+
+  it('does not render category selector in read-only mode', () => {
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '' }];
+    const panel = createPanel(pins, { editable: false });
+    expect(panel.querySelector('.pinment-category-select')).toBeNull();
+  });
+
+  it('shows category badge when pin has a category', () => {
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '', c: 'text' }];
+    const panel = createPanel(pins);
+    const badge = panel.querySelector('.pinment-category-badge');
+    expect(badge).not.toBeNull();
+    expect(badge.textContent).toBe('Text issue');
+    expect(badge.classList.contains('pinment-category-text')).toBe(true);
+  });
+
+  it('does not show category badge when pin has no category', () => {
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '' }];
+    const panel = createPanel(pins);
+    expect(panel.querySelector('.pinment-category-badge')).toBeNull();
+  });
+
+  it('invokes onCategoryChange when category is selected', () => {
+    const onCategoryChange = vi.fn();
+    const pins = [{ id: 3, x: 0.5, y: 100, author: '', text: '' }];
+    const panel = createPanel(pins, { editable: true, onCategoryChange });
+    const select = panel.querySelector('.pinment-category-select');
+    select.value = 'question';
+    select.dispatchEvent(new Event('change'));
+    expect(onCategoryChange).toHaveBeenCalledWith(3, 'question');
+  });
+
+  it('invokes onCategoryChange with undefined when cleared', () => {
+    const onCategoryChange = vi.fn();
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '', c: 'text' }];
+    const panel = createPanel(pins, { editable: true, onCategoryChange });
+    const select = panel.querySelector('.pinment-category-select');
+    select.value = '';
+    select.dispatchEvent(new Event('change'));
+    expect(onCategoryChange).toHaveBeenCalledWith(1, undefined);
+  });
+
+  it('renders resolve button in editable mode', () => {
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '' }];
+    const panel = createPanel(pins, { editable: true });
+    const resolveBtn = panel.querySelector('.pinment-btn-resolve');
+    expect(resolveBtn).not.toBeNull();
+    expect(resolveBtn.textContent).toBe('Resolve');
+  });
+
+  it('shows Resolved text when pin is resolved', () => {
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '', resolved: true }];
+    const panel = createPanel(pins, { editable: true });
+    const resolveBtn = panel.querySelector('.pinment-btn-resolve');
+    expect(resolveBtn.textContent).toBe('Resolved');
+    expect(resolveBtn.classList.contains('pinment-btn-resolve-resolved')).toBe(true);
+  });
+
+  it('applies resolved class to comment item when resolved', () => {
+    const pins = [{ id: 1, x: 0.5, y: 100, author: '', text: '', resolved: true }];
+    const panel = createPanel(pins, { editable: true });
+    const comment = panel.querySelector('.pinment-comment');
+    expect(comment.classList.contains('pinment-comment-resolved')).toBe(true);
+  });
+
+  it('invokes onResolveToggle when resolve button is clicked', () => {
+    const onResolveToggle = vi.fn();
+    const pins = [{ id: 5, x: 0.5, y: 100, author: '', text: '' }];
+    const panel = createPanel(pins, { editable: true, onResolveToggle });
+    panel.querySelector('.pinment-btn-resolve').click();
+    expect(onResolveToggle).toHaveBeenCalledWith(5);
+  });
+
+  it('renders export button', () => {
+    const panel = createPanel([]);
+    const exportBtn = panel.querySelector('.pinment-btn-export');
+    expect(exportBtn).not.toBeNull();
+  });
+
+  it('invokes onExport when export button is clicked', () => {
+    const onExport = vi.fn();
+    const panel = createPanel([], { onExport });
+    panel.querySelector('.pinment-btn-export').click();
+    expect(onExport).toHaveBeenCalledOnce();
   });
 });
 
