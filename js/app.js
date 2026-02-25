@@ -24,9 +24,17 @@ export function renderViewer(state) {
 
   if (!viewer || !meta || !pinsList) return;
 
-  // Hide install, show viewer
-  if (install) install.hidden = true;
+  // Show viewer; collapse install to just the bookmarklet step
   viewer.hidden = false;
+  if (install) {
+    install.querySelectorAll('.step:not(.step-featured)').forEach(s => { s.hidden = true; });
+    const stepsList = install.querySelector('.steps');
+    if (stepsList) stepsList.classList.add('steps-compact');
+    // Move viewer above the install section
+    if (install.parentNode === viewer.parentNode) {
+      viewer.parentNode.insertBefore(viewer, install);
+    }
+  }
 
   // Render meta info
   meta.innerHTML = '';
@@ -126,8 +134,15 @@ export function renderError(message) {
 
   if (!viewer || !meta || !pinsList) return;
 
-  if (install) install.hidden = true;
   viewer.hidden = false;
+  if (install) {
+    install.querySelectorAll('.step:not(.step-featured)').forEach(s => { s.hidden = true; });
+    const stepsList = install.querySelector('.steps');
+    if (stepsList) stepsList.classList.add('steps-compact');
+    if (install.parentNode === viewer.parentNode) {
+      viewer.parentNode.insertBefore(viewer, install);
+    }
+  }
 
   meta.innerHTML = '';
   const errorP = document.createElement('p');

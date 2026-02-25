@@ -5,7 +5,14 @@ import { createState, compress } from '../src/state.js';
 beforeEach(() => {
   document.body.innerHTML = `
     <div id="app">
-      <section id="install"></section>
+      <section id="install">
+        <ol class="steps">
+          <li class="step step-featured"><div class="step-content">Bookmarklet</div></li>
+          <li class="step"><div class="step-content">Navigate</div></li>
+          <li class="step"><div class="step-content">Drop pins</div></li>
+          <li class="step"><div class="step-content">Share</div></li>
+        </ol>
+      </section>
       <section id="viewer" hidden>
         <div id="review-meta"></div>
         <div id="review-pins" role="list"></div>
@@ -94,11 +101,26 @@ describe('renderViewer', () => {
     expect(item.textContent).toContain('Wrong heading');
   });
 
-  it('hides the install section when showing viewer', () => {
+  it('collapses install to only the bookmarklet step when showing viewer', () => {
     const state = createState('https://example.com', 1440, []);
     renderViewer(state);
     const install = document.getElementById('install');
-    expect(install.hidden).toBe(true);
+    expect(install.hidden).toBe(false);
+    const featured = install.querySelector('.step-featured');
+    expect(featured.hidden).toBe(false);
+    const otherSteps = install.querySelectorAll('.step:not(.step-featured)');
+    otherSteps.forEach(s => expect(s.hidden).toBe(true));
+    expect(install.querySelector('.steps').classList.contains('steps-compact')).toBe(true);
+  });
+
+  it('moves the viewer above the install section', () => {
+    const state = createState('https://example.com', 1440, []);
+    renderViewer(state);
+    const main = document.querySelector('#app main') || document.getElementById('app');
+    const children = [...main.children];
+    const viewerIdx = children.indexOf(document.getElementById('viewer'));
+    const installIdx = children.indexOf(document.getElementById('install'));
+    expect(viewerIdx).toBeLessThan(installIdx);
   });
 
   it('displays singular "annotation" for a single pin', () => {
@@ -169,10 +191,14 @@ describe('renderError', () => {
     expect(errorEl.textContent).toContain('Something went wrong');
   });
 
-  it('hides the install section', () => {
+  it('collapses install to only the bookmarklet step', () => {
     renderError('Bad link');
     const install = document.getElementById('install');
-    expect(install.hidden).toBe(true);
+    expect(install.hidden).toBe(false);
+    const featured = install.querySelector('.step-featured');
+    expect(featured.hidden).toBe(false);
+    const otherSteps = install.querySelectorAll('.step:not(.step-featured)');
+    otherSteps.forEach(s => expect(s.hidden).toBe(true));
   });
 
   it('clears any existing pins list', () => {
