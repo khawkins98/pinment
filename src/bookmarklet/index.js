@@ -5,7 +5,7 @@
  * allows pin placement, and provides share/restore functionality.
  * All DOM elements use the pinment- class namespace to avoid conflicts.
  */
-import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal, createMinimizedButton, createExitConfirmModal } from './ui.js';
+import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal, createMinimizedButton, createExitConfirmModal, repositionPin, highlightPinTarget, clearPinHighlight } from './ui.js';
 import { compress, parseShareUrl, validateState, createShareUrl, estimateUrlSize, exportStateAsJson, importStateFromJson, SCHEMA_VERSION, MAX_URL_BYTES } from '../state.js';
 import { detectEnv } from '../selector.js';
 const STORAGE_KEY_AUTHOR = 'pinment-author';
@@ -57,6 +57,23 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   pinContainer.id = PIN_CONTAINER_ID;
   pinContainer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2147483639;';
   document.body.appendChild(pinContainer);
+
+  // Reposition all pins when the window is resized
+  let resizeRafId = null;
+  function repositionAllPins() {
+    for (const pin of state.pins) {
+      const pinEl = pinContainer.querySelector(`[data-pinment-id="${pin.id}"]`);
+      if (pinEl) repositionPin(pinEl, pin);
+    }
+  }
+  function onResize() {
+    if (resizeRafId) cancelAnimationFrame(resizeRafId);
+    resizeRafId = requestAnimationFrame(() => {
+      resizeRafId = null;
+      repositionAllPins();
+    });
+  }
+  window.addEventListener('resize', onResize);
 
   // Stored author name
   let authorName = '';
@@ -111,6 +128,11 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     const el = createPinElement(pin);
     el.style.pointerEvents = 'auto';
     el.style.cursor = 'grab';
+
+    // Highlight anchored element on hover
+    el.addEventListener('mouseenter', () => highlightPinTarget(pin));
+    el.addEventListener('mouseleave', () => clearPinHighlight());
+
     makePinDraggable(el, pin);
     pinContainer.appendChild(el);
   }
@@ -132,6 +154,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
         if (!isDragging && Math.abs(dx) + Math.abs(dy) > DRAG_THRESHOLD) {
           isDragging = true;
           pinEl.classList.add('pinment-pin-dragging');
+          clearPinHighlight();
         }
         if (isDragging) {
           const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
@@ -155,29 +178,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
           pin.fx = pos.fx;
           pin.fy = pos.fy;
 
-          // Snap to element-based position
-          if (pos.s) {
-            try {
-              const target = document.querySelector(pos.s);
-              if (target) {
-                const rect = target.getBoundingClientRect();
-                const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
-                const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-                pinEl.style.left = `${rect.left + scrollX + pos.ox * rect.width}px`;
-                pinEl.style.top = `${rect.top + scrollY + pos.oy * rect.height}px`;
-              }
-            } catch { /* invalid selector */ }
-          }
-
-          pinEl.classList.remove('pinment-pin-fallback');
-          if (pos.s) {
-            try {
-              if (!document.querySelector(pos.s)) pinEl.classList.add('pinment-pin-fallback');
-            } catch {
-              pinEl.classList.add('pinment-pin-fallback');
-            }
-          }
-
+          repositionPin(pinEl, pin);
           updateCapacity(document.getElementById(PANEL_ID));
         } else {
           scrollToComment(pin.id);
@@ -241,6 +242,8 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       onImport: handleImport,
       filters: state.filters,
       onFilterChange: handleFilterChange,
+      onPinHover: handlePinHover,
+      onPinHoverEnd: handlePinHoverEnd,
     });
     panel.id = PANEL_ID;
 
@@ -363,6 +366,15 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   function handleToggle() {
     state.pinsVisible = !state.pinsVisible;
     pinContainer.style.display = state.pinsVisible ? '' : 'none';
+  }
+
+  function handlePinHover(pinId) {
+    const pin = state.pins.find((p) => p.id === pinId);
+    if (pin) highlightPinTarget(pin);
+  }
+
+  function handlePinHoverEnd() {
+    clearPinHighlight();
   }
 
   function handleFilterChange(newFilters) {
@@ -534,6 +546,9 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   }
 
   function deactivate() {
+    window.removeEventListener('resize', onResize);
+    if (resizeRafId) cancelAnimationFrame(resizeRafId);
+    clearPinHighlight();
     const overlay = document.getElementById(OVERLAY_ID);
     if (overlay) overlay.remove();
     const panel = document.getElementById(PANEL_ID);

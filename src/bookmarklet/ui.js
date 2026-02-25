@@ -239,6 +239,10 @@ export function buildStyles() {
   z-index: 2147483639;
   cursor: crosshair;
 }
+.pinment-highlight {
+  outline: 2px solid #3182ce !important;
+  outline-offset: 2px !important;
+}
 .pinment-viewport-warning {
   padding: 8px 16px;
   background: #fffbeb;
@@ -776,13 +780,13 @@ export function calculatePinPosition(clientX, clientY, overlay, pinContainer) {
  * @param {object} pin - v2 pin object with s, ox, oy, fx, fy
  * @returns {HTMLElement}
  */
-export function createPinElement(pin) {
-  const el = document.createElement('div');
-  el.className = 'pinment-pin';
-  el.dataset.pinmentId = pin.id;
-  el.textContent = String(pin.id);
-  el.style.position = 'absolute';
-
+/**
+ * Repositions a pin element to match its anchored DOM element's current position.
+ *
+ * @param {HTMLElement} pinEl - The pin dot element
+ * @param {object} pin - The pin data object with s, ox, oy, fx, fy
+ */
+export function repositionPin(pinEl, pin) {
   let positioned = false;
 
   if (pin.s) {
@@ -792,23 +796,56 @@ export function createPinElement(pin) {
         const rect = target.getBoundingClientRect();
         const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
         const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-        el.style.left = `${rect.left + scrollX + (pin.ox != null ? pin.ox : 0.5) * rect.width}px`;
-        el.style.top = `${rect.top + scrollY + (pin.oy != null ? pin.oy : 0.5) * rect.height}px`;
+        pinEl.style.left = `${rect.left + scrollX + (pin.ox != null ? pin.ox : 0.5) * rect.width}px`;
+        pinEl.style.top = `${rect.top + scrollY + (pin.oy != null ? pin.oy : 0.5) * rect.height}px`;
         positioned = true;
       }
-    } catch {
-      // Invalid selector, fall through to fallback
-    }
+    } catch { /* invalid selector */ }
   }
 
   if (!positioned) {
-    el.style.left = `${pin.fx}px`;
-    el.style.top = `${pin.fy}px`;
-    if (pin.s) {
-      // Had a selector but couldn't resolve it — mark as fallback
-      el.classList.add('pinment-pin-fallback');
-    }
+    pinEl.style.left = `${pin.fx}px`;
+    pinEl.style.top = `${pin.fy}px`;
   }
+
+  pinEl.classList.toggle('pinment-pin-fallback', !!(pin.s && !positioned));
+}
+
+/**
+ * Adds a visual highlight to the DOM element a pin is anchored to.
+ * @param {object} pin - Pin data with selector `s`
+ * @returns {Element|null} The highlighted element, or null
+ */
+export function highlightPinTarget(pin) {
+  if (!pin.s) return null;
+  try {
+    const target = document.querySelector(pin.s);
+    if (target) {
+      target.classList.add('pinment-highlight');
+      return target;
+    }
+  } catch { /* invalid selector */ }
+  return null;
+}
+
+/**
+ * Removes the highlight class from any currently highlighted elements.
+ */
+export function clearPinHighlight() {
+  const highlighted = document.querySelectorAll('.pinment-highlight');
+  for (const el of highlighted) {
+    el.classList.remove('pinment-highlight');
+  }
+}
+
+export function createPinElement(pin) {
+  const el = document.createElement('div');
+  el.className = 'pinment-pin';
+  el.dataset.pinmentId = pin.id;
+  el.textContent = String(pin.id);
+  el.style.position = 'absolute';
+
+  repositionPin(el, pin);
 
   if (pin.resolved) {
     el.classList.add('pinment-pin-resolved');
@@ -818,7 +855,7 @@ export function createPinElement(pin) {
 }
 
 export function createPanel(pins, options = {}) {
-  const { editable = false, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport, onReply, onImport, filters = null, onFilterChange = null } = options;
+  const { editable = false, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport, onReply, onImport, filters = null, onFilterChange = null, onPinHover = null, onPinHoverEnd = null } = options;
 
   const panel = document.createElement('div');
   panel.className = 'pinment-panel';
@@ -878,7 +915,7 @@ export function createPanel(pins, options = {}) {
   }
 
   for (const pin of visiblePins) {
-    const comment = createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, onResolveToggle, onReply });
+    const comment = createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, onResolveToggle, onReply, onPinHover, onPinHoverEnd });
     body.appendChild(comment);
   }
 
@@ -1067,11 +1104,14 @@ function renderReplies(replies) {
   return container;
 }
 
-function createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, onResolveToggle, onReply } = {}) {
+function createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, onResolveToggle, onReply, onPinHover, onPinHoverEnd } = {}) {
   const item = document.createElement('div');
   item.className = 'pinment-comment';
   if (pin.resolved) item.classList.add('pinment-comment-resolved');
   item.dataset.pinmentId = pin.id;
+
+  if (onPinHover) item.addEventListener('mouseenter', () => onPinHover(pin.id));
+  if (onPinHoverEnd) item.addEventListener('mouseleave', () => onPinHoverEnd(pin.id));
 
   const header = document.createElement('div');
   header.className = 'pinment-comment-header';

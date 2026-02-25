@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createPinElement, createPanel, calculatePinPosition, restorePins, buildStyles, createWelcomeModal, createDocsSiteModal, createMinimizedButton, createExitConfirmModal, filterAndSortPins } from '../src/bookmarklet/ui.js';
+import { createPinElement, createPanel, calculatePinPosition, restorePins, buildStyles, createWelcomeModal, createDocsSiteModal, createMinimizedButton, createExitConfirmModal, filterAndSortPins, repositionPin, highlightPinTarget, clearPinHighlight } from '../src/bookmarklet/ui.js';
 import { createState } from '../src/state.js';
 
 beforeEach(() => {
@@ -132,6 +132,120 @@ describe('createPinElement', () => {
     const pin = { id: 1, s: null, ox: null, oy: null, fx: 100, fy: 200, author: '', text: '' };
     const el = createPinElement(pin);
     expect(el.classList.contains('pinment-pin-resolved')).toBe(false);
+  });
+});
+
+describe('repositionPin', () => {
+  it('positions pin using element bounding rect and offset ratios', () => {
+    const target = document.createElement('div');
+    target.id = 'reposition-target';
+    document.body.appendChild(target);
+    target.getBoundingClientRect = () => ({ left: 100, top: 200, width: 400, height: 300 });
+
+    const pin = { id: 1, s: '#reposition-target', ox: 0.5, oy: 0.25, fx: 0, fy: 0 };
+    const el = document.createElement('div');
+    repositionPin(el, pin);
+
+    expect(el.style.left).toBe('300px'); // 100 + 0.5 * 400
+    expect(el.style.top).toBe('275px');  // 200 + 0.25 * 300
+    expect(el.classList.contains('pinment-pin-fallback')).toBe(false);
+  });
+
+  it('falls back to fx/fy when selector is null', () => {
+    const pin = { id: 1, s: null, ox: null, oy: null, fx: 360, fy: 500 };
+    const el = document.createElement('div');
+    repositionPin(el, pin);
+
+    expect(el.style.left).toBe('360px');
+    expect(el.style.top).toBe('500px');
+    expect(el.classList.contains('pinment-pin-fallback')).toBe(false);
+  });
+
+  it('falls back to fx/fy when selector does not resolve', () => {
+    const pin = { id: 1, s: '#nonexistent', ox: 0.5, oy: 0.5, fx: 100, fy: 200 };
+    const el = document.createElement('div');
+    repositionPin(el, pin);
+
+    expect(el.style.left).toBe('100px');
+    expect(el.style.top).toBe('200px');
+    expect(el.classList.contains('pinment-pin-fallback')).toBe(true);
+  });
+
+  it('removes fallback class when selector resolves again', () => {
+    const el = document.createElement('div');
+    el.classList.add('pinment-pin-fallback');
+
+    const target = document.createElement('div');
+    target.id = 'resolve-again';
+    document.body.appendChild(target);
+    target.getBoundingClientRect = () => ({ left: 50, top: 50, width: 100, height: 100 });
+
+    const pin = { id: 1, s: '#resolve-again', ox: 0.5, oy: 0.5, fx: 999, fy: 999 };
+    repositionPin(el, pin);
+
+    expect(el.classList.contains('pinment-pin-fallback')).toBe(false);
+  });
+
+  it('handles invalid selectors gracefully', () => {
+    const pin = { id: 1, s: '[invalid!!!', ox: 0.5, oy: 0.5, fx: 50, fy: 60 };
+    const el = document.createElement('div');
+    repositionPin(el, pin);
+
+    expect(el.style.left).toBe('50px');
+    expect(el.style.top).toBe('60px');
+    expect(el.classList.contains('pinment-pin-fallback')).toBe(true);
+  });
+});
+
+describe('highlightPinTarget', () => {
+  it('adds pinment-highlight class to resolved element', () => {
+    const target = document.createElement('div');
+    target.id = 'highlight-test';
+    document.body.appendChild(target);
+
+    const pin = { id: 1, s: '#highlight-test' };
+    const result = highlightPinTarget(pin);
+
+    expect(result).toBe(target);
+    expect(target.classList.contains('pinment-highlight')).toBe(true);
+  });
+
+  it('returns null when pin has no selector', () => {
+    const pin = { id: 1, s: null };
+    const result = highlightPinTarget(pin);
+    expect(result).toBeNull();
+  });
+
+  it('returns null when selector does not resolve', () => {
+    const pin = { id: 1, s: '#no-such-element' };
+    const result = highlightPinTarget(pin);
+    expect(result).toBeNull();
+  });
+
+  it('handles invalid selectors gracefully', () => {
+    const pin = { id: 1, s: '[invalid!!!' };
+    const result = highlightPinTarget(pin);
+    expect(result).toBeNull();
+  });
+});
+
+describe('clearPinHighlight', () => {
+  it('removes pinment-highlight from all elements', () => {
+    const el1 = document.createElement('div');
+    const el2 = document.createElement('div');
+    el1.classList.add('pinment-highlight');
+    el2.classList.add('pinment-highlight');
+    document.body.appendChild(el1);
+    document.body.appendChild(el2);
+
+    clearPinHighlight();
+
+    expect(el1.classList.contains('pinment-highlight')).toBe(false);
+    expect(el2.classList.contains('pinment-highlight')).toBe(false);
+  });
+
+  it('is a no-op when no elements are highlighted', () => {
+    expect(() => clearPinHighlight()).not.toThrow();
   });
 });
 
