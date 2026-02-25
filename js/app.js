@@ -240,7 +240,7 @@ export function init() {
   const bookmarkletLink = document.getElementById('bookmarklet');
   if (bookmarkletLink) {
     const scriptUrl = window.location.origin + import.meta.env.BASE_URL + 'pinment-bookmarklet.js';
-    const loader = `(function(){var s=document.createElement('script');s.src='${scriptUrl}?v='+Date.now();document.head.appendChild(s)})()`;
+    const loader = `(function(){var s=document.createElement('script');s.src='${scriptUrl}?v='+Date.now();s.onerror=function(){alert('Pinment failed to load. The page may block external scripts.')};document.head.appendChild(s)})()`;
     bookmarkletLink.href = 'javascript:void ' + encodeURIComponent(loader);
   }
 

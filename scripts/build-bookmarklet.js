@@ -33,7 +33,7 @@ async function buildBookmarklet() {
   console.log(`Bookmarklet bundle: dist/pinment-bookmarklet.js (${bundleSizeKB} KB)`);
 
   // Write a loader template (the host site's app.js fills in the real URL)
-  const loaderTemplate = `javascript:void (function(){var s=document.createElement('script');s.src='YOUR_BASE_URL/pinment-bookmarklet.js?v='+Date.now();document.head.appendChild(s)})()`;
+  const loaderTemplate = `javascript:void (function(){var s=document.createElement('script');s.src='YOUR_BASE_URL/pinment-bookmarklet.js?v='+Date.now();s.onerror=function(){alert('Pinment failed to load. The page may block external scripts.')};document.head.appendChild(s)})()`;
   writeFileSync(path.resolve(ROOT, 'dist/bookmarklet-loader.txt'), loaderTemplate);
   console.log(`Loader template: dist/bookmarklet-loader.txt (${loaderTemplate.length} chars)`);
 }
