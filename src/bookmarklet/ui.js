@@ -135,6 +135,8 @@ export function buildStyles() {
 }
 .pinment-comment-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   margin-top: 6px;
 }
@@ -199,18 +201,18 @@ export function buildStyles() {
 }
 .pinment-mode-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   padding: 8px 16px;
   font-size: 13px;
   border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
-  gap: 8px;
+  gap: 4px;
 }
 .pinment-mode-bar-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  width: 100%;
+  font-size: 12px;
+  line-height: 1.3;
 }
 .pinment-mode-bar-edit {
   background: #fffbeb;
@@ -230,6 +232,7 @@ export function buildStyles() {
   border: 1px solid;
   cursor: pointer;
   white-space: nowrap;
+  margin-left: auto;
   transition: background 0.15s, color 0.15s;
 }
 .pinment-mode-bar-edit .pinment-mode-toggle {
@@ -251,7 +254,8 @@ export function buildStyles() {
 .pinment-mode-bar-btns {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  width: 100%;
 }
 .pinment-btn-icon {
   width: 28px;
@@ -835,7 +839,7 @@ export function buildStyles() {
 .pinment-filter-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
   padding: 8px 16px;
   border-bottom: 1px solid #e2e8f0;
   background: #f7fafc;
@@ -1000,6 +1004,24 @@ export function createPinElement(pin) {
   return el;
 }
 
+// Lightweight element helpers
+function makeBtn(text, variant, onClick) {
+  const btn = document.createElement('button');
+  btn.className = 'pinment-btn' + (variant ? ` pinment-btn-${variant}` : '');
+  btn.textContent = text;
+  if (onClick) btn.addEventListener('click', onClick);
+  return btn;
+}
+
+function makeIconBtn(svgHtml, title, onClick) {
+  const btn = document.createElement('button');
+  btn.className = 'pinment-btn pinment-btn-icon';
+  btn.innerHTML = svgHtml;
+  btn.title = title;
+  if (onClick) btn.addEventListener('click', onClick);
+  return btn;
+}
+
 export function createPanel(pins, options = {}) {
   const { editable = false, editMode = true, onEditModeToggle, onShareExport, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onReply, onImport, onStartNew, filters = null, onFilterChange = null, onPinHover = null, onPinHoverEnd = null } = options;
 
@@ -1045,29 +1067,20 @@ export function createPanel(pins, options = {}) {
     const modeBarBtns = document.createElement('div');
     modeBarBtns.className = 'pinment-mode-bar-btns';
 
-    const visibilityBtn = document.createElement('button');
-    visibilityBtn.className = 'pinment-btn pinment-btn-icon';
-    visibilityBtn.title = 'Toggle pin visibility';
-    visibilityBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2.5"/></svg>';
-    if (onToggle) visibilityBtn.addEventListener('click', onToggle);
-    modeBarBtns.appendChild(visibilityBtn);
+    modeBarBtns.appendChild(makeIconBtn(
+      '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2.5"/></svg>',
+      'Toggle pin visibility', onToggle));
 
     if (onImport) {
-      const importBtn = document.createElement('button');
-      importBtn.className = 'pinment-btn pinment-btn-icon';
-      importBtn.title = 'Import from JSON';
-      importBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M8 10V2"/><path d="M4 4l4-4 4 4"/></svg>';
-      importBtn.addEventListener('click', onImport);
-      modeBarBtns.appendChild(importBtn);
+      modeBarBtns.appendChild(makeIconBtn(
+        '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M8 10V2"/><path d="M4 4l4-4 4 4"/></svg>',
+        'Import from JSON', onImport));
     }
 
     if (onStartNew) {
-      const startNewBtn = document.createElement('button');
-      startNewBtn.className = 'pinment-btn pinment-btn-icon';
-      startNewBtn.title = 'Start new annotation';
-      startNewBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>';
-      startNewBtn.addEventListener('click', onStartNew);
-      modeBarBtns.appendChild(startNewBtn);
+      modeBarBtns.appendChild(makeIconBtn(
+        '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>',
+        'Start new annotation', onStartNew));
     }
 
     const modeToggleBtn = document.createElement('button');
@@ -1338,31 +1351,18 @@ function createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, 
     const actions = document.createElement('div');
     actions.className = 'pinment-comment-actions';
 
-    const saveBtn = document.createElement('button');
-    saveBtn.className = 'pinment-btn pinment-btn-save';
-    saveBtn.textContent = 'Save';
-    if (onSave) {
-      saveBtn.addEventListener('click', () => {
-        onSave(pin.id, textarea.value, authorInput.value);
-      });
-    }
+    const saveBtn = makeBtn('Save', 'save', onSave ? () => onSave(pin.id, textarea.value, authorInput.value) : null);
     actions.appendChild(saveBtn);
 
-    const resolveBtn = document.createElement('button');
-    resolveBtn.className = `pinment-btn pinment-btn-resolve ${pin.resolved ? 'pinment-btn-resolve-resolved' : 'pinment-btn-resolve-open'}`;
-    resolveBtn.textContent = pin.resolved ? 'Resolved' : 'Resolve';
-    if (onResolveToggle) {
-      resolveBtn.addEventListener('click', () => onResolveToggle(pin.id));
-    }
+    const resolveBtn = makeBtn(pin.resolved ? 'Resolved' : 'Resolve', 'resolve', onResolveToggle ? () => onResolveToggle(pin.id) : null);
+    resolveBtn.classList.add(pin.resolved ? 'pinment-btn-resolve-resolved' : 'pinment-btn-resolve-open');
     actions.appendChild(resolveBtn);
 
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'pinment-btn pinment-btn-delete';
-    deleteBtn.textContent = 'Delete';
-    if (onDelete) {
-      deleteBtn.addEventListener('click', () => onDelete(pin.id));
-    }
+    const deleteBtn = makeBtn('Delete', 'delete', onDelete ? () => onDelete(pin.id) : null);
     actions.appendChild(deleteBtn);
+
+    const replyBtn = makeBtn('Reply', 'reply');
+    actions.appendChild(replyBtn);
 
     item.appendChild(actions);
 
@@ -1370,12 +1370,6 @@ function createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, 
     if (pin.replies && pin.replies.length > 0) {
       item.appendChild(renderReplies(pin.replies));
     }
-
-    // Reply button and form
-    const replyBtn = document.createElement('button');
-    replyBtn.className = 'pinment-btn pinment-btn-reply';
-    replyBtn.textContent = 'Reply';
-    item.appendChild(replyBtn);
 
     replyBtn.addEventListener('click', () => {
       // Toggle reply form
@@ -1402,21 +1396,13 @@ function createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, 
       const replyActions = document.createElement('div');
       replyActions.className = 'pinment-reply-actions';
 
-      const addBtn = document.createElement('button');
-      addBtn.className = 'pinment-btn pinment-btn-add-reply';
-      addBtn.textContent = 'Add reply';
-      addBtn.addEventListener('click', () => {
+      replyActions.appendChild(makeBtn('Add reply', 'add-reply', () => {
         const text = replyInput.value.trim();
         if (!text) return;
         if (onReply) onReply(pin.id, text, replyAuthorInput.value);
-      });
-      replyActions.appendChild(addBtn);
+      }));
 
-      const cancelBtn = document.createElement('button');
-      cancelBtn.className = 'pinment-btn pinment-btn-cancel-reply';
-      cancelBtn.textContent = 'Cancel';
-      cancelBtn.addEventListener('click', () => form.remove());
-      replyActions.appendChild(cancelBtn);
+      replyActions.appendChild(makeBtn('Cancel', 'cancel-reply', () => form.remove()));
 
       form.appendChild(replyActions);
       item.appendChild(form);
