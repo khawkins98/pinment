@@ -191,53 +191,6 @@ export function buildStyles() {
 .pinment-btn-save:hover {
   background: #2f855a;
 }
-.pinment-capacity {
-  width: 100%;
-  padding: 6px 0 0;
-  font-size: 11px;
-  color: #a0aec0;
-}
-.pinment-capacity-bar {
-  height: 4px;
-  background: #edf2f7;
-  border-radius: 2px;
-  margin-top: 3px;
-  overflow: hidden;
-}
-.pinment-capacity-fill {
-  height: 100%;
-  background: #38a169;
-  border-radius: 2px;
-  transition: width 0.3s ease;
-}
-.pinment-capacity-fill-warn {
-  background: #dd6b20;
-}
-.pinment-capacity-fill-danger {
-  background: #e53e3e;
-}
-.pinment-btn-share:disabled {
-  background: #a0aec0;
-  border-color: #a0aec0;
-  cursor: not-allowed;
-}
-.pinment-toast {
-  position: fixed;
-  bottom: 24px;
-  right: 340px;
-  background: #1a202c;
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 13px;
-  z-index: 2147483643;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  animation: pinment-toast-in 0.2s ease;
-}
-@keyframes pinment-toast-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 .pinment-overlay {
   position: fixed;
   inset: 0;
@@ -735,10 +688,6 @@ export function buildStyles() {
   opacity: 0.5;
   background: #a0aec0;
 }
-.pinment-btn-export {
-  font-size: 12px;
-  padding: 6px 10px;
-}
 .pinment-btn-share {
   display: flex;
   align-items: center;
@@ -829,10 +778,6 @@ export function buildStyles() {
 .pinment-btn-cancel-reply {
   font-size: 12px;
   padding: 3px 8px;
-}
-.pinment-btn-import {
-  font-size: 12px;
-  padding: 6px 10px;
 }
 .pinment-filter-toolbar {
   display: flex;
@@ -1003,7 +948,7 @@ export function createPinElement(pin) {
 }
 
 export function createPanel(pins, options = {}) {
-  const { editable = false, editMode = true, onEditModeToggle, onShare, onShareExport, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport, onExportPdf, onReply, onImport, onStartNew, filters = null, onFilterChange = null, onPinHover = null, onPinHoverEnd = null } = options;
+  const { editable = false, editMode = true, onEditModeToggle, onShareExport, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onReply, onImport, onStartNew, filters = null, onFilterChange = null, onPinHover = null, onPinHoverEnd = null } = options;
 
   const panel = document.createElement('div');
   panel.className = 'pinment-panel';
