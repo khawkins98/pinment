@@ -1929,6 +1929,7 @@ export function createShareModal({ shareUrl, urlSize, maxUrlBytes, onExportJson,
   copyBtn.addEventListener('click', () => {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(shareUrl).then(() => {
+        feedbackEl.className = 'pinment-share-copied';
         feedbackEl.textContent = 'Copied to clipboard!';
         feedbackEl.style.display = '';
         copyBtn.textContent = 'Copied!';

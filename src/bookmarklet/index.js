@@ -508,7 +508,10 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   function copyShareUrlToClipboard() {
     const data = buildStateData();
     const size = estimateUrlSize(data);
-    if (size > MAX_URL_BYTES) return;
+    if (size > MAX_URL_BYTES) {
+      handleShareExport();
+      return;
+    }
     const shareUrl = createShareUrl(data);
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(shareUrl).catch(() => {
