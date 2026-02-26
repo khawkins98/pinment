@@ -135,6 +135,8 @@ export function buildStyles() {
 }
 .pinment-comment-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   margin-top: 6px;
 }
@@ -152,6 +154,14 @@ export function buildStyles() {
   font-size: 11px;
   color: #a0aec0;
   margin-top: 2px;
+}
+.pinment-version a {
+  color: inherit;
+  text-decoration: none;
+}
+.pinment-version a:hover {
+  color: #718096;
+  text-decoration: underline;
 }
 .pinment-btn {
   padding: 6px 14px;
@@ -191,53 +201,6 @@ export function buildStyles() {
 .pinment-btn-save:hover {
   background: #2f855a;
 }
-.pinment-capacity {
-  width: 100%;
-  padding: 6px 0 0;
-  font-size: 11px;
-  color: #a0aec0;
-}
-.pinment-capacity-bar {
-  height: 4px;
-  background: #edf2f7;
-  border-radius: 2px;
-  margin-top: 3px;
-  overflow: hidden;
-}
-.pinment-capacity-fill {
-  height: 100%;
-  background: #38a169;
-  border-radius: 2px;
-  transition: width 0.3s ease;
-}
-.pinment-capacity-fill-warn {
-  background: #dd6b20;
-}
-.pinment-capacity-fill-danger {
-  background: #e53e3e;
-}
-.pinment-btn-share:disabled {
-  background: #a0aec0;
-  border-color: #a0aec0;
-  cursor: not-allowed;
-}
-.pinment-toast {
-  position: fixed;
-  bottom: 24px;
-  right: 340px;
-  background: #1a202c;
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 13px;
-  z-index: 2147483643;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  animation: pinment-toast-in 0.2s ease;
-}
-@keyframes pinment-toast-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 .pinment-overlay {
   position: fixed;
   inset: 0;
@@ -246,18 +209,18 @@ export function buildStyles() {
 }
 .pinment-mode-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   padding: 8px 16px;
   font-size: 13px;
   border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
-  gap: 8px;
+  gap: 4px;
 }
 .pinment-mode-bar-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  width: 100%;
+  font-size: 12px;
+  line-height: 1.3;
 }
 .pinment-mode-bar-edit {
   background: #fffbeb;
@@ -277,6 +240,7 @@ export function buildStyles() {
   border: 1px solid;
   cursor: pointer;
   white-space: nowrap;
+  margin-left: auto;
   transition: background 0.15s, color 0.15s;
 }
 .pinment-mode-bar-edit .pinment-mode-toggle {
@@ -298,7 +262,8 @@ export function buildStyles() {
 .pinment-mode-bar-btns {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  width: 100%;
 }
 .pinment-btn-icon {
   width: 28px;
@@ -473,6 +438,10 @@ export function buildStyles() {
   background: #fff;
   color: #2d3748;
   width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 .pinment-modal-btn-secondary:hover {
   background: #f9fafb;
@@ -599,6 +568,116 @@ export function buildStyles() {
   gap: 8px;
   margin-top: 16px;
 }
+.pinment-share-url-row {
+  display: flex;
+  gap: 8px;
+}
+.pinment-share-url-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 12px;
+  box-sizing: border-box;
+  background: #f9fafb;
+  color: #2d3748;
+  cursor: text;
+}
+.pinment-share-url-input:focus {
+  outline: none;
+  border-color: #3182ce;
+}
+.pinment-share-capacity {
+  font-size: 11px;
+  color: #718096;
+  margin-top: 6px;
+}
+.pinment-share-capacity-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid #a0aec0;
+  color: #718096;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: help;
+  position: relative;
+  vertical-align: middle;
+  margin-left: 4px;
+  line-height: 1;
+}
+.pinment-share-capacity-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2d3748;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  padding: 6px 10px;
+  border-radius: 4px;
+  white-space: normal;
+  width: 220px;
+  line-height: 1.4;
+  z-index: 10;
+  pointer-events: none;
+  text-align: left;
+}
+.pinment-share-capacity-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #2d3748;
+}
+.pinment-share-capacity-help:hover .pinment-share-capacity-tooltip,
+.pinment-share-capacity-help:focus .pinment-share-capacity-tooltip {
+  display: block;
+}
+.pinment-share-capacity-bar {
+  height: 4px;
+  background: #edf2f7;
+  border-radius: 2px;
+  margin-top: 3px;
+  overflow: hidden;
+}
+.pinment-share-capacity-fill {
+  height: 100%;
+  background: #38a169;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+.pinment-share-capacity-fill-warn {
+  background: #dd6b20;
+}
+.pinment-share-capacity-fill-danger {
+  background: #e53e3e;
+}
+.pinment-share-copied {
+  color: #38a169;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.pinment-share-error {
+  color: #e53e3e;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.pinment-share-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .pinment-pin-fallback {
   opacity: 0.75;
   border-color: #fbbf24;
@@ -673,10 +752,6 @@ export function buildStyles() {
 .pinment-pin-resolved {
   opacity: 0.5;
   background: #a0aec0;
-}
-.pinment-btn-export {
-  font-size: 12px;
-  padding: 6px 10px;
 }
 .pinment-btn-share {
   display: flex;
@@ -769,14 +844,10 @@ export function buildStyles() {
   font-size: 12px;
   padding: 3px 8px;
 }
-.pinment-btn-import {
-  font-size: 12px;
-  padding: 6px 10px;
-}
 .pinment-filter-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
   padding: 8px 16px;
   border-bottom: 1px solid #e2e8f0;
   background: #f7fafc;
@@ -941,8 +1012,26 @@ export function createPinElement(pin) {
   return el;
 }
 
+// Lightweight element helpers
+function makeBtn(text, variant, onClick) {
+  const btn = document.createElement('button');
+  btn.className = 'pinment-btn' + (variant ? ` pinment-btn-${variant}` : '');
+  btn.textContent = text;
+  if (onClick) btn.addEventListener('click', onClick);
+  return btn;
+}
+
+function makeIconBtn(svgHtml, title, onClick) {
+  const btn = document.createElement('button');
+  btn.className = 'pinment-btn pinment-btn-icon';
+  btn.innerHTML = svgHtml;
+  btn.title = title;
+  if (onClick) btn.addEventListener('click', onClick);
+  return btn;
+}
+
 export function createPanel(pins, options = {}) {
-  const { editable = false, editMode = true, onEditModeToggle, onShare, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onExport, onExportPdf, onReply, onImport, onStartNew, filters = null, onFilterChange = null, onPinHover = null, onPinHoverEnd = null } = options;
+  const { editable = false, editMode = true, onEditModeToggle, onShareExport, onToggle, onClose, onMinimize, onExit, onSave, onDelete, onCategoryChange, onResolveToggle, onReply, onImport, onStartNew, filters = null, onFilterChange = null, onPinHover = null, onPinHoverEnd = null } = options;
 
   const panel = document.createElement('div');
   panel.className = 'pinment-panel';
@@ -986,20 +1075,20 @@ export function createPanel(pins, options = {}) {
     const modeBarBtns = document.createElement('div');
     modeBarBtns.className = 'pinment-mode-bar-btns';
 
-    const visibilityBtn = document.createElement('button');
-    visibilityBtn.className = 'pinment-btn pinment-btn-icon';
-    visibilityBtn.title = 'Toggle pin visibility';
-    visibilityBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2.5"/></svg>';
-    if (onToggle) visibilityBtn.addEventListener('click', onToggle);
-    modeBarBtns.appendChild(visibilityBtn);
+    modeBarBtns.appendChild(makeIconBtn(
+      '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2.5"/></svg>',
+      'Toggle pin visibility', onToggle));
+
+    if (onImport) {
+      modeBarBtns.appendChild(makeIconBtn(
+        '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M8 10V2"/><path d="M4 4l4-4 4 4"/></svg>',
+        'Import from JSON', onImport));
+    }
 
     if (onStartNew) {
-      const startNewBtn = document.createElement('button');
-      startNewBtn.className = 'pinment-btn pinment-btn-icon';
-      startNewBtn.title = 'Start new annotation';
-      startNewBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>';
-      startNewBtn.addEventListener('click', onStartNew);
-      modeBarBtns.appendChild(startNewBtn);
+      modeBarBtns.appendChild(makeIconBtn(
+        '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>',
+        'Start new annotation', onStartNew));
     }
 
     const modeToggleBtn = document.createElement('button');
@@ -1043,36 +1132,21 @@ export function createPanel(pins, options = {}) {
   const footer = document.createElement('div');
   footer.className = 'pinment-panel-footer';
 
-  const shareBtn = document.createElement('button');
-  shareBtn.className = 'pinment-btn pinment-btn-share';
-  shareBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 2v8"/><path d="M4 6l4-4 4 4"/><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/></svg> Save &amp; Share';
-  if (onShare) shareBtn.addEventListener('click', onShare);
-  footer.appendChild(shareBtn);
-
-  const exportBtn = document.createElement('button');
-  exportBtn.className = 'pinment-btn pinment-btn-export';
-  exportBtn.title = 'Export as JSON';
-  exportBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M8 2v8"/><path d="M4 8l4 4 4-4"/></svg>';
-  if (onExport) exportBtn.addEventListener('click', onExport);
-  footer.appendChild(exportBtn);
-
-  const pdfBtn = document.createElement('button');
-  pdfBtn.className = 'pinment-btn pinment-btn-export-pdf';
-  pdfBtn.title = 'Export as PDF';
-  pdfBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="1" width="12" height="14" rx="1"/><path d="M5 5h6"/><path d="M5 8h6"/><path d="M5 11h3"/></svg>';
-  if (onExportPdf) pdfBtn.addEventListener('click', onExportPdf);
-  footer.appendChild(pdfBtn);
-
-  const importBtn = document.createElement('button');
-  importBtn.className = 'pinment-btn pinment-btn-import';
-  importBtn.title = 'Import from JSON';
-  importBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M8 10V2"/><path d="M4 4l4-4 4 4"/></svg>';
-  if (onImport) importBtn.addEventListener('click', onImport);
-  footer.appendChild(importBtn);
+  const shareExportBtn = document.createElement('button');
+  shareExportBtn.className = 'pinment-btn pinment-btn-share';
+  shareExportBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 2v8"/><path d="M4 6l4-4 4 4"/><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/></svg> Share &amp; Export';
+  if (onShareExport) shareExportBtn.addEventListener('click', onShareExport);
+  footer.appendChild(shareExportBtn);
 
   const versionEl = document.createElement('div');
   versionEl.className = 'pinment-version';
-  versionEl.textContent = `v${VERSION} · ${RELEASE_DATE}`;
+  const versionLink = document.createElement('a');
+  versionLink.href = 'https://github.com/khawkins98/pinment/blob/main/CHANGELOG.md';
+  versionLink.target = '_blank';
+  versionLink.rel = 'noopener noreferrer';
+  versionLink.title = 'View changelog';
+  versionLink.textContent = `v${VERSION} · ${RELEASE_DATE}`;
+  versionEl.appendChild(versionLink);
   footer.appendChild(versionEl);
 
   panel.appendChild(footer);
@@ -1291,31 +1365,18 @@ function createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, 
     const actions = document.createElement('div');
     actions.className = 'pinment-comment-actions';
 
-    const saveBtn = document.createElement('button');
-    saveBtn.className = 'pinment-btn pinment-btn-save';
-    saveBtn.textContent = 'Save';
-    if (onSave) {
-      saveBtn.addEventListener('click', () => {
-        onSave(pin.id, textarea.value, authorInput.value);
-      });
-    }
+    const saveBtn = makeBtn('Save', 'save', onSave ? () => onSave(pin.id, textarea.value, authorInput.value) : null);
     actions.appendChild(saveBtn);
 
-    const resolveBtn = document.createElement('button');
-    resolveBtn.className = `pinment-btn pinment-btn-resolve ${pin.resolved ? 'pinment-btn-resolve-resolved' : 'pinment-btn-resolve-open'}`;
-    resolveBtn.textContent = pin.resolved ? 'Resolved' : 'Resolve';
-    if (onResolveToggle) {
-      resolveBtn.addEventListener('click', () => onResolveToggle(pin.id));
-    }
+    const resolveBtn = makeBtn(pin.resolved ? 'Resolved' : 'Resolve', 'resolve', onResolveToggle ? () => onResolveToggle(pin.id) : null);
+    resolveBtn.classList.add(pin.resolved ? 'pinment-btn-resolve-resolved' : 'pinment-btn-resolve-open');
     actions.appendChild(resolveBtn);
 
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'pinment-btn pinment-btn-delete';
-    deleteBtn.textContent = 'Delete';
-    if (onDelete) {
-      deleteBtn.addEventListener('click', () => onDelete(pin.id));
-    }
+    const deleteBtn = makeBtn('Delete', 'delete', onDelete ? () => onDelete(pin.id) : null);
     actions.appendChild(deleteBtn);
+
+    const replyBtn = makeBtn('Reply', 'reply');
+    actions.appendChild(replyBtn);
 
     item.appendChild(actions);
 
@@ -1323,12 +1384,6 @@ function createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, 
     if (pin.replies && pin.replies.length > 0) {
       item.appendChild(renderReplies(pin.replies));
     }
-
-    // Reply button and form
-    const replyBtn = document.createElement('button');
-    replyBtn.className = 'pinment-btn pinment-btn-reply';
-    replyBtn.textContent = 'Reply';
-    item.appendChild(replyBtn);
 
     replyBtn.addEventListener('click', () => {
       // Toggle reply form
@@ -1355,21 +1410,13 @@ function createCommentItem(pin, editable, { onSave, onDelete, onCategoryChange, 
       const replyActions = document.createElement('div');
       replyActions.className = 'pinment-reply-actions';
 
-      const addBtn = document.createElement('button');
-      addBtn.className = 'pinment-btn pinment-btn-add-reply';
-      addBtn.textContent = 'Add reply';
-      addBtn.addEventListener('click', () => {
+      replyActions.appendChild(makeBtn('Add reply', 'add-reply', () => {
         const text = replyInput.value.trim();
         if (!text) return;
         if (onReply) onReply(pin.id, text, replyAuthorInput.value);
-      });
-      replyActions.appendChild(addBtn);
+      }));
 
-      const cancelBtn = document.createElement('button');
-      cancelBtn.className = 'pinment-btn pinment-btn-cancel-reply';
-      cancelBtn.textContent = 'Cancel';
-      cancelBtn.addEventListener('click', () => form.remove());
-      replyActions.appendChild(cancelBtn);
+      replyActions.appendChild(makeBtn('Cancel', 'cancel-reply', () => form.remove()));
 
       form.appendChild(replyActions);
       item.appendChild(form);
@@ -1798,6 +1845,207 @@ export function createMobileWarningModal() {
   });
 
   return { modal: backdrop, promise };
+}
+
+/**
+ * Creates a share & export modal with three options:
+ * copy share URL, download JSON, download PDF.
+ *
+ * @param {object} options
+ * @param {string} options.shareUrl - the full share URL
+ * @param {number} options.urlSize - estimated URL size in bytes
+ * @param {number} options.maxUrlBytes - max URL size limit
+ * @param {() => void} options.onExportJson - callback for JSON export
+ * @param {() => Promise<void>} options.onExportPdf - callback for PDF export
+ * @returns {{ modal: HTMLElement }}
+ */
+export function createShareModal({ shareUrl, urlSize, maxUrlBytes, onExportJson, onExportPdf }) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'pinment-modal-backdrop';
+
+  const modal = document.createElement('div');
+  modal.className = 'pinment-modal';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'pinment-modal-header';
+
+  const headerLeft = document.createElement('div');
+  headerLeft.className = 'pinment-modal-header-left';
+
+  const title = document.createElement('h2');
+  title.className = 'pinment-modal-title';
+  title.innerHTML = LOGO_SVG + 'Share & Export';
+  headerLeft.appendChild(title);
+  header.appendChild(headerLeft);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'pinment-modal-close';
+  closeBtn.textContent = '\u00d7';
+  closeBtn.title = 'Close';
+  header.appendChild(closeBtn);
+
+  modal.appendChild(header);
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'pinment-modal-body';
+
+  // --- Section 1: Copy share URL ---
+  const urlLabel = document.createElement('label');
+  urlLabel.className = 'pinment-modal-label';
+  urlLabel.textContent = 'Copy share URL';
+  body.appendChild(urlLabel);
+
+  const pct = Math.min(100, Math.round((urlSize / maxUrlBytes) * 100));
+  const overLimit = urlSize > maxUrlBytes;
+
+  const urlRow = document.createElement('div');
+  urlRow.className = 'pinment-share-url-row';
+
+  const urlInput = document.createElement('input');
+  urlInput.className = 'pinment-share-url-input';
+  urlInput.type = 'text';
+  urlInput.readOnly = true;
+  urlInput.value = overLimit ? '' : shareUrl;
+  urlRow.appendChild(urlInput);
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'pinment-modal-btn pinment-modal-btn-primary';
+  copyBtn.textContent = 'Copy';
+  if (overLimit) copyBtn.disabled = true;
+  urlRow.appendChild(copyBtn);
+
+  body.appendChild(urlRow);
+
+  // Capacity indicator
+  const capacityEl = document.createElement('div');
+  capacityEl.className = 'pinment-share-capacity';
+  let fillClass = 'pinment-share-capacity-fill';
+  if (pct >= 80 || overLimit) fillClass += ' pinment-share-capacity-fill-danger';
+  else if (pct >= 60) fillClass += ' pinment-share-capacity-fill-warn';
+  const tooltipText = 'Pinment stores annotations in the URL itself \u2014 no server needed. Browsers limit URL length to roughly 8KB, so very large annotations may need JSON export instead.';
+  const helpIcon = `<span class="pinment-share-capacity-help" tabindex="0" role="button" aria-label="What is the URL limit?">?<span class="pinment-share-capacity-tooltip">${tooltipText}</span></span>`;
+  capacityEl.innerHTML = overLimit
+    ? `<strong style="color:#e53e3e">URL is ${Math.round(urlSize / 1024)}KB \u2014 exceeds the ~${Math.round(maxUrlBytes / 1024)}KB limit.</strong> Remove some annotations or shorten comments, or use JSON export below. ${helpIcon}`
+    : `${Math.round(urlSize / 1024 * 10) / 10}KB of ~${Math.round(maxUrlBytes / 1024)}KB URL limit (${pct}%) ${helpIcon}`;
+  const capacityBar = document.createElement('div');
+  capacityBar.className = 'pinment-share-capacity-bar';
+  capacityBar.innerHTML = `<div class="${fillClass}" style="width:${pct}%"></div>`;
+  if (!overLimit) capacityEl.appendChild(capacityBar);
+  body.appendChild(capacityEl);
+
+  // Feedback area for copy
+  const feedbackEl = document.createElement('div');
+  feedbackEl.className = 'pinment-share-copied';
+  feedbackEl.style.display = 'none';
+  body.appendChild(feedbackEl);
+
+  // --- Divider ---
+  const divider1 = document.createElement('div');
+  divider1.className = 'pinment-modal-divider';
+  divider1.textContent = 'or';
+  body.appendChild(divider1);
+
+  // --- Section 2: Export as JSON ---
+  const jsonLabel = document.createElement('label');
+  jsonLabel.className = 'pinment-modal-label';
+  jsonLabel.textContent = 'Export as JSON file';
+  body.appendChild(jsonLabel);
+
+  const jsonBtn = document.createElement('button');
+  jsonBtn.className = 'pinment-modal-btn pinment-modal-btn-secondary';
+  jsonBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M8 2v8"/><path d="M4 8l4 4 4-4"/></svg> Download JSON';
+  body.appendChild(jsonBtn);
+
+  // --- Divider ---
+  const divider2 = document.createElement('div');
+  divider2.className = 'pinment-modal-divider';
+  divider2.textContent = 'or';
+  body.appendChild(divider2);
+
+  // --- Section 3: Export as PDF ---
+  const pdfLabel = document.createElement('label');
+  pdfLabel.className = 'pinment-modal-label';
+  pdfLabel.textContent = 'Export as PDF with screenshot';
+  body.appendChild(pdfLabel);
+
+  const pdfBtn = document.createElement('button');
+  pdfBtn.className = 'pinment-modal-btn pinment-modal-btn-secondary';
+  pdfBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="1" width="12" height="14" rx="1"/><path d="M5 5h6"/><path d="M5 8h6"/><path d="M5 11h3"/></svg> Download PDF';
+  body.appendChild(pdfBtn);
+
+  modal.appendChild(body);
+  backdrop.appendChild(modal);
+
+  // --- Event handlers ---
+  closeBtn.addEventListener('click', () => backdrop.remove());
+
+  copyBtn.addEventListener('click', () => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        feedbackEl.className = 'pinment-share-copied';
+        feedbackEl.textContent = 'Copied to clipboard!';
+        feedbackEl.style.display = '';
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+          copyBtn.textContent = 'Copy';
+          feedbackEl.style.display = 'none';
+        }, 2500);
+      }).catch(() => {
+        urlInput.select();
+        feedbackEl.className = 'pinment-share-error';
+        feedbackEl.textContent = 'Could not copy automatically. Select the URL above and copy manually.';
+        feedbackEl.style.display = '';
+      });
+    } else {
+      urlInput.select();
+      feedbackEl.className = 'pinment-share-error';
+      feedbackEl.textContent = 'Clipboard not available. Select the URL above and copy manually.';
+      feedbackEl.style.display = '';
+    }
+  });
+
+  // Select all text on click for easy manual copy
+  urlInput.addEventListener('click', () => urlInput.select());
+
+  jsonBtn.addEventListener('click', () => {
+    if (onExportJson) onExportJson();
+    feedbackEl.className = 'pinment-share-copied';
+    feedbackEl.textContent = 'JSON file downloaded!';
+    feedbackEl.style.display = '';
+    setTimeout(() => { feedbackEl.style.display = 'none'; }, 2500);
+  });
+
+  pdfBtn.addEventListener('click', async () => {
+    const originalContent = pdfBtn.innerHTML;
+    pdfBtn.innerHTML = '<span class="pinment-btn-spinner"></span> Generating PDF\u2026';
+    pdfBtn.disabled = true;
+    // Close the modal before PDF capture so it doesn't appear in screenshot
+    backdrop.style.display = 'none';
+    try {
+      if (onExportPdf) await onExportPdf();
+    } catch (err) {
+      alert(err.message || 'PDF export failed.');
+    } finally {
+      backdrop.style.display = '';
+      pdfBtn.innerHTML = originalContent;
+      pdfBtn.disabled = false;
+    }
+  });
+
+  // Escape to close
+  backdrop.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeBtn.click();
+    }
+  });
+
+  // Focus the copy button by default
+  setTimeout(() => overLimit ? jsonBtn.focus() : copyBtn.focus(), 0);
+
+  return { modal: backdrop };
 }
 
 /**

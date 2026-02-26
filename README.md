@@ -2,7 +2,7 @@
 
 Pin comments to any live webpage. Share the annotations as a single URL. No backend, no accounts, no database.
 
-**Try it:** [khawkins98.github.io/pinment](https://khawkins98.github.io/pinment/) | **Blog post:** [Introducing Pinment](https://www.allaboutken.com/posts/20260225-introducing-pinment/)
+**Try it:** [khawkins98.github.io/pinment](https://khawkins98.github.io/pinment/) | **Blog post:** [Introducing Pinment](https://www.allaboutken.com/posts/20260225-introducing-pinment/) | [Changelog](CHANGELOG.md)
 
 ## How it works
 

@@ -12,6 +12,26 @@ function bookmarkletPlugin() {
   let bookmarkletCode = '';
   let isDev = false;
 
+  async function buildBookmarklet() {
+    const result = await esbuild({
+      entryPoints: [path.resolve(__dirname, 'src/bookmarklet/index.js')],
+      bundle: true,
+      minify: true,
+      format: 'iife',
+      write: false,
+      target: ['es2020'],
+      define: { '__PINMENT_DEV__': JSON.stringify(isDev) },
+    });
+    bookmarkletCode = result.outputFiles[0].text.trim();
+  }
+
+  /** Files under src/ that get bundled into the bookmarklet */
+  function isBookmarkletSource(filePath) {
+    const rel = path.relative(path.resolve(__dirname, 'src'), filePath);
+    if (rel.startsWith('..')) return false;
+    return rel.startsWith('bookmarklet') || ['state.js', 'selector.js', 'version.js'].includes(rel);
+  }
+
   return {
     name: 'pinment-bookmarklet',
 
@@ -20,16 +40,7 @@ function bookmarkletPlugin() {
     },
 
     async buildStart() {
-      const result = await esbuild({
-        entryPoints: [path.resolve(__dirname, 'src/bookmarklet/index.js')],
-        bundle: true,
-        minify: true,
-        format: 'iife',
-        write: false,
-        target: ['es2020'],
-        define: { '__PINMENT_DEV__': JSON.stringify(isDev) },
-      });
-      bookmarkletCode = result.outputFiles[0].text.trim();
+      await buildBookmarklet();
     },
 
     // Serve the bookmarklet JS during dev
@@ -38,6 +49,15 @@ function bookmarkletPlugin() {
         res.setHeader('Content-Type', 'application/javascript');
         res.end(bookmarkletCode);
       });
+    },
+
+    // Re-bundle bookmarklet when its source files change
+    async handleHotUpdate({ file, server }) {
+      if (isBookmarkletSource(file)) {
+        await buildBookmarklet();
+        server.ws.send({ type: 'full-reload' });
+        return [];
+      }
     },
 
     // Emit the bookmarklet JS as a static asset during build

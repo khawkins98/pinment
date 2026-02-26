@@ -5,7 +5,7 @@
  * allows pin placement, and provides share/restore functionality.
  * All DOM elements use the pinment- class namespace to avoid conflicts.
  */
-import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal, createMobileWarningModal, createMinimizedButton, createExitConfirmModal, repositionPin, highlightPinTarget, clearPinHighlight } from './ui.js';
+import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal, createMobileWarningModal, createMinimizedButton, createExitConfirmModal, createShareModal, repositionPin, highlightPinTarget, clearPinHighlight } from './ui.js';
 import { compress, decompress, parseShareUrl, validateState, createShareUrl, estimateUrlSize, exportStateAsJson, importStateFromJson, SCHEMA_VERSION, MAX_URL_BYTES } from '../state.js';
 import { exportPdf } from './pdf-export.js';
 import { detectEnv } from '../selector.js';
@@ -266,7 +266,6 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
           pin.fy = pos.fy;
 
           repositionPin(pinEl, pin);
-          updateCapacity(document.getElementById(PANEL_ID));
         } else {
           scrollToComment(pin.id);
         }
@@ -318,7 +317,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       editable: true,
       editMode: state.editMode,
       onEditModeToggle: handleEditModeToggle,
-      onShare: handleShare,
+      onShareExport: handleShareExport,
       onToggle: handleToggle,
       onMinimize: minimizePanel,
       onExit: handleExit,
@@ -326,8 +325,6 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       onDelete: handleDelete,
       onCategoryChange: handleCategoryChange,
       onResolveToggle: handleResolveToggle,
-      onExport: handleExport,
-      onExportPdf: handleExportPdf,
       onReply: handleReply,
       onImport: handleImport,
       onStartNew: handleStartNew,
@@ -337,9 +334,6 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       onPinHoverEnd: handlePinHoverEnd,
     });
     panel.id = PANEL_ID;
-
-    // Add capacity indicator
-    updateCapacity(panel);
 
     document.body.appendChild(panel);
 
@@ -364,7 +358,6 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
         // Ignore storage errors
       }
     }
-    updateCapacity(document.getElementById(PANEL_ID));
   }
 
   function handleDelete(pinId) {
@@ -385,7 +378,6 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
         delete pin.c;
       }
     }
-    updateCapacity(document.getElementById(PANEL_ID));
   }
 
   function handleResolveToggle(pinId) {
@@ -464,30 +456,6 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     URL.revokeObjectURL(url);
   }
 
-  async function handleExportPdf() {
-    const panel = document.getElementById(PANEL_ID);
-    const pdfBtn = panel && panel.querySelector('.pinment-btn-export-pdf');
-    const originalContent = pdfBtn ? pdfBtn.innerHTML : '';
-
-    function setProgress(msg) {
-      if (pdfBtn) {
-        pdfBtn.innerHTML = '<span class="pinment-btn-spinner"></span> ' + msg;
-        pdfBtn.disabled = true;
-      }
-    }
-
-    try {
-      await exportPdf(state.pins, buildStateData(), setProgress);
-    } catch (err) {
-      alert(err.message || 'PDF export failed.');
-    } finally {
-      if (pdfBtn) {
-        pdfBtn.innerHTML = originalContent;
-        pdfBtn.disabled = false;
-      }
-    }
-  }
-
   function handleToggle() {
     state.pinsVisible = !state.pinsVisible;
     pinContainer.style.display = state.pinsVisible ? '' : 'none';
@@ -537,22 +505,16 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     };
   }
 
-  function handleShare() {
+  function copyShareUrlToClipboard() {
     const data = buildStateData();
     const size = estimateUrlSize(data);
-
     if (size > MAX_URL_BYTES) {
-      alert(`The share URL is ${Math.round(size / 1024)}KB, which exceeds the ~${Math.round(MAX_URL_BYTES / 1024)}KB limit. Remove some annotations or shorten comments before sharing.`);
+      handleShareExport();
       return;
     }
-
     const shareUrl = createShareUrl(data);
-
-    // Copy to clipboard
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(shareUrl).then(() => {
-        showShareConfirmation();
-      }).catch(() => {
+      navigator.clipboard.writeText(shareUrl).catch(() => {
         prompt('Copy this share URL:', shareUrl);
       });
     } else {
@@ -560,16 +522,19 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     }
   }
 
-  function showShareConfirmation() {
-    const panel = document.getElementById(PANEL_ID);
-    if (!panel) return;
-    let toast = panel.querySelector('.pinment-toast');
-    if (toast) toast.remove();
-    toast = document.createElement('div');
-    toast.className = 'pinment-toast';
-    toast.textContent = 'Share URL copied to clipboard';
-    panel.appendChild(toast);
-    setTimeout(() => toast.remove(), 2500);
+  function handleShareExport() {
+    const data = buildStateData();
+    const size = estimateUrlSize(data);
+    const shareUrl = size <= MAX_URL_BYTES ? createShareUrl(data) : '';
+
+    const { modal } = createShareModal({
+      shareUrl,
+      urlSize: size,
+      maxUrlBytes: MAX_URL_BYTES,
+      onExportJson: handleExport,
+      onExportPdf: () => exportPdf(state.pins, buildStateData(), () => {}),
+    });
+    document.body.appendChild(modal);
   }
 
   function scrollToComment(pinId) {
@@ -601,44 +566,6 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     panel.insertBefore(banner, panel.children[1] || null);
   }
 
-  function updateCapacity(panel) {
-    if (!panel) return;
-    let capacityEl = panel.querySelector('.pinment-capacity');
-    if (!capacityEl) {
-      capacityEl = document.createElement('div');
-      capacityEl.className = 'pinment-capacity';
-      const footer = panel.querySelector('.pinment-panel-footer');
-      if (footer) footer.appendChild(capacityEl);
-    }
-
-    const data = buildStateData();
-    const size = estimateUrlSize(data);
-    const pct = Math.min(100, Math.round((size / MAX_URL_BYTES) * 100));
-    const overLimit = size > MAX_URL_BYTES;
-
-    let fillClass = 'pinment-capacity-fill';
-    if (overLimit || pct > 80) fillClass += ' pinment-capacity-fill-danger';
-    else if (pct > 60) fillClass += ' pinment-capacity-fill-warn';
-
-    const label = overLimit
-      ? `URL capacity: over limit (${Math.round(size / 1024)}KB / ${Math.round(MAX_URL_BYTES / 1024)}KB)`
-      : `URL capacity: ${pct}%`;
-
-    capacityEl.innerHTML = `
-      <span>${label}</span>
-      <div class="pinment-capacity-bar">
-        <div class="${fillClass}" style="width:${Math.min(pct, 100)}%"></div>
-      </div>
-    `;
-
-    // Disable share button when over limit
-    const shareBtn = panel.querySelector('.pinment-btn-share');
-    if (shareBtn) {
-      shareBtn.disabled = overLimit;
-      shareBtn.title = overLimit ? 'Remove annotations or shorten comments to share' : '';
-    }
-  }
-
   function minimizePanel() {
     panelMinimized = true;
     const panel = document.getElementById(PANEL_ID);
@@ -668,7 +595,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     }
     const { modal } = createExitConfirmModal({
       onCopyAndExit: () => {
-        handleShare();
+        copyShareUrlToClipboard();
         deactivate();
       },
       onExitWithout: () => {
