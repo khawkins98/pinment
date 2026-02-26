@@ -155,6 +155,14 @@ export function buildStyles() {
   color: #a0aec0;
   margin-top: 2px;
 }
+.pinment-version a {
+  color: inherit;
+  text-decoration: none;
+}
+.pinment-version a:hover {
+  color: #718096;
+  text-decoration: underline;
+}
 .pinment-btn {
   padding: 6px 14px;
   border: 1px solid #cbd5e0;
@@ -1132,7 +1140,13 @@ export function createPanel(pins, options = {}) {
 
   const versionEl = document.createElement('div');
   versionEl.className = 'pinment-version';
-  versionEl.textContent = `v${VERSION} · ${RELEASE_DATE}`;
+  const versionLink = document.createElement('a');
+  versionLink.href = 'https://github.com/khawkins98/pinment/blob/main/CHANGELOG.md';
+  versionLink.target = '_blank';
+  versionLink.rel = 'noopener noreferrer';
+  versionLink.title = 'View changelog';
+  versionLink.textContent = `v${VERSION} · ${RELEASE_DATE}`;
+  versionEl.appendChild(versionLink);
   footer.appendChild(versionEl);
 
   panel.appendChild(footer);
