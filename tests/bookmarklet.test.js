@@ -1227,6 +1227,272 @@ describe('createShareModal', () => {
     modal.querySelector('.pinment-modal-close').click();
     expect(document.querySelector('.pinment-modal-backdrop')).toBeNull();
   });
+
+  it('closes when Escape key is pressed', () => {
+    const { modal } = createShareModal({
+      shareUrl: 'https://example.com/#data=abc',
+      urlSize: 2048,
+      maxUrlBytes: 8192,
+      onExportJson: vi.fn(),
+      onExportPdf: vi.fn(),
+    });
+    document.body.appendChild(modal);
+    modal.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(document.querySelector('.pinment-modal-backdrop')).toBeNull();
+  });
+
+  it('copies share URL to clipboard on button click', async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      writable: true,
+      configurable: true,
+    });
+
+    const { modal } = createShareModal({
+      shareUrl: 'https://example.com/#data=abc',
+      urlSize: 2048,
+      maxUrlBytes: 8192,
+      onExportJson: vi.fn(),
+      onExportPdf: vi.fn(),
+    });
+    document.body.appendChild(modal);
+
+    const copyBtn = [...modal.querySelectorAll('button')].find(b => b.textContent === 'Copy');
+    copyBtn.click();
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith('https://example.com/#data=abc');
+      expect(copyBtn.textContent).toBe('Copied!');
+      expect(modal.querySelector('.pinment-share-copied').textContent).toBe('Copied to clipboard!');
+    });
+  });
+
+  it('resets feedback class on successful copy after a previous error', async () => {
+    const writeText = vi.fn()
+      .mockRejectedValueOnce(new Error('denied'))
+      .mockResolvedValueOnce(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      writable: true,
+      configurable: true,
+    });
+
+    const { modal } = createShareModal({
+      shareUrl: 'https://example.com/#data=abc',
+      urlSize: 2048,
+      maxUrlBytes: 8192,
+      onExportJson: vi.fn(),
+      onExportPdf: vi.fn(),
+    });
+    document.body.appendChild(modal);
+
+    const copyBtn = [...modal.querySelectorAll('button')].find(b => b.textContent === 'Copy');
+    const feedback = modal.querySelector('.pinment-share-copied');
+
+    // First click: fails
+    copyBtn.click();
+    await vi.waitFor(() => expect(feedback.className).toBe('pinment-share-error'));
+
+    // Second click: succeeds — class should reset
+    copyBtn.click();
+    await vi.waitFor(() => expect(feedback.className).toBe('pinment-share-copied'));
+  });
+
+  it('shows error when clipboard API rejects', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: vi.fn(() => Promise.reject(new Error('denied'))) },
+      writable: true,
+      configurable: true,
+    });
+
+    const { modal } = createShareModal({
+      shareUrl: 'https://example.com/#data=abc',
+      urlSize: 2048,
+      maxUrlBytes: 8192,
+      onExportJson: vi.fn(),
+      onExportPdf: vi.fn(),
+    });
+    document.body.appendChild(modal);
+
+    const copyBtn = [...modal.querySelectorAll('button')].find(b => b.textContent === 'Copy');
+    copyBtn.click();
+    await vi.waitFor(() => {
+      const feedback = modal.querySelector('.pinment-share-error');
+      expect(feedback).not.toBeNull();
+      expect(feedback.textContent).toContain('Select the URL above');
+    });
+  });
+
+  it('shows fallback message when clipboard API is unavailable', () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: undefined,
+      writable: true,
+      configurable: true,
+    });
+
+    const { modal } = createShareModal({
+      shareUrl: 'https://example.com/#data=abc',
+      urlSize: 2048,
+      maxUrlBytes: 8192,
+      onExportJson: vi.fn(),
+      onExportPdf: vi.fn(),
+    });
+    document.body.appendChild(modal);
+
+    const copyBtn = [...modal.querySelectorAll('button')].find(b => b.textContent === 'Copy');
+    copyBtn.click();
+    const feedback = modal.querySelector('.pinment-share-error');
+    expect(feedback).not.toBeNull();
+    expect(feedback.textContent).toContain('Clipboard not available');
+  });
+
+  it('selects URL text when input is clicked', () => {
+    const { modal } = createShareModal({
+      shareUrl: 'https://example.com/#data=abc',
+      urlSize: 2048,
+      maxUrlBytes: 8192,
+      onExportJson: vi.fn(),
+      onExportPdf: vi.fn(),
+    });
+
+    const urlInput = modal.querySelector('.pinment-share-url-input');
+    const selectSpy = vi.spyOn(urlInput, 'select');
+    urlInput.click();
+    expect(selectSpy).toHaveBeenCalled();
+  });
+
+  it('shows JSON downloaded feedback on export', () => {
+    const onExportJson = vi.fn();
+    const { modal } = createShareModal({
+      shareUrl: 'https://example.com/#data=abc',
+      urlSize: 2048,
+      maxUrlBytes: 8192,
+      onExportJson,
+      onExportPdf: vi.fn(),
+    });
+    document.body.appendChild(modal);
+
+    const jsonBtn = [...modal.querySelectorAll('button')].find(b => b.textContent.includes('JSON'));
+    jsonBtn.click();
+    const feedback = modal.querySelector('.pinment-share-copied');
+    expect(feedback.style.display).not.toBe('none');
+    expect(feedback.textContent).toBe('JSON file downloaded!');
+  });
+
+  it('shows loading state during PDF export', async () => {
+    let resolveExport;
+    const onExportPdf = vi.fn(() => new Promise(r => { resolveExport = r; }));
+    const { modal } = createShareModal({
+      shareUrl: 'https://example.com/#data=abc',
+      urlSize: 2048,
+      maxUrlBytes: 8192,
+      onExportJson: vi.fn(),
+      onExportPdf,
+    });
+    document.body.appendChild(modal);
+
+    const pdfBtn = [...modal.querySelectorAll('button')].find(b => b.textContent.includes('PDF'));
+    pdfBtn.click();
+    // Allow microtask to run
+    await Promise.resolve();
+
+    expect(pdfBtn.disabled).toBe(true);
+    expect(pdfBtn.textContent).toContain('Generating PDF');
+
+    resolveExport();
+    await vi.waitFor(() => expect(pdfBtn.disabled).toBe(false));
+  });
+
+  it('hides modal during PDF capture and restores after', async () => {
+    let backdropDisplayDuringCapture;
+    const onExportPdf = vi.fn(async () => {
+      backdropDisplayDuringCapture = modal.style.display;
+    });
+    const { modal } = createShareModal({
+      shareUrl: 'https://example.com/#data=abc',
+      urlSize: 2048,
+      maxUrlBytes: 8192,
+      onExportJson: vi.fn(),
+      onExportPdf,
+    });
+    document.body.appendChild(modal);
+
+    const pdfBtn = [...modal.querySelectorAll('button')].find(b => b.textContent.includes('PDF'));
+    pdfBtn.click();
+    await vi.waitFor(() => expect(onExportPdf).toHaveBeenCalled());
+
+    expect(backdropDisplayDuringCapture).toBe('none');
+    expect(modal.style.display).toBe('');
+  });
+
+  it('shows alert on PDF export error and re-enables button', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const onExportPdf = vi.fn(() => Promise.reject(new Error('Canvas too large')));
+    const { modal } = createShareModal({
+      shareUrl: 'https://example.com/#data=abc',
+      urlSize: 2048,
+      maxUrlBytes: 8192,
+      onExportJson: vi.fn(),
+      onExportPdf,
+    });
+    document.body.appendChild(modal);
+
+    const pdfBtn = [...modal.querySelectorAll('button')].find(b => b.textContent.includes('PDF'));
+    pdfBtn.click();
+    await vi.waitFor(() => expect(alertSpy).toHaveBeenCalledWith('Canvas too large'));
+    expect(pdfBtn.disabled).toBe(false);
+    alertSpy.mockRestore();
+  });
+
+  it('shows warning color at 60-79% capacity', () => {
+    const { modal } = createShareModal({
+      shareUrl: 'https://example.com',
+      urlSize: 5500,
+      maxUrlBytes: 8192,
+      onExportJson: vi.fn(),
+      onExportPdf: vi.fn(),
+    });
+    expect(modal.querySelector('.pinment-share-capacity-fill-warn')).not.toBeNull();
+    expect(modal.querySelector('.pinment-share-capacity-fill-danger')).toBeNull();
+  });
+
+  it('shows danger color at 80%+ capacity', () => {
+    const { modal } = createShareModal({
+      shareUrl: 'https://example.com',
+      urlSize: 7000,
+      maxUrlBytes: 8192,
+      onExportJson: vi.fn(),
+      onExportPdf: vi.fn(),
+    });
+    expect(modal.querySelector('.pinment-share-capacity-fill-danger')).not.toBeNull();
+  });
+
+  it('hides capacity bar when over limit', () => {
+    const { modal } = createShareModal({
+      shareUrl: '',
+      urlSize: 10000,
+      maxUrlBytes: 8192,
+      onExportJson: vi.fn(),
+      onExportPdf: vi.fn(),
+    });
+    expect(modal.querySelector('.pinment-share-capacity-bar')).toBeNull();
+    expect(modal.querySelector('.pinment-share-capacity').textContent).toContain('exceeds');
+  });
+
+  it('displays URL limit help tooltip', () => {
+    const { modal } = createShareModal({
+      shareUrl: 'https://example.com',
+      urlSize: 2048,
+      maxUrlBytes: 8192,
+      onExportJson: vi.fn(),
+      onExportPdf: vi.fn(),
+    });
+    const helpIcon = modal.querySelector('.pinment-share-capacity-help');
+    expect(helpIcon).not.toBeNull();
+    const tooltip = modal.querySelector('.pinment-share-capacity-tooltip');
+    expect(tooltip).not.toBeNull();
+    expect(tooltip.textContent).toContain('no server needed');
+  });
 });
 
 describe('drawPinsOnCanvas', () => {
