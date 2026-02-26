@@ -426,6 +426,10 @@ export function buildStyles() {
   background: #fff;
   color: #2d3748;
   width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 .pinment-modal-btn-secondary:hover {
   background: #f9fafb;
@@ -575,8 +579,57 @@ export function buildStyles() {
 }
 .pinment-share-capacity {
   font-size: 11px;
-  color: #a0aec0;
+  color: #718096;
   margin-top: 6px;
+}
+.pinment-share-capacity-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid #a0aec0;
+  color: #718096;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: help;
+  position: relative;
+  vertical-align: middle;
+  margin-left: 4px;
+  line-height: 1;
+}
+.pinment-share-capacity-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2d3748;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  padding: 6px 10px;
+  border-radius: 4px;
+  white-space: normal;
+  width: 220px;
+  line-height: 1.4;
+  z-index: 10;
+  pointer-events: none;
+  text-align: left;
+}
+.pinment-share-capacity-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #2d3748;
+}
+.pinment-share-capacity-help:hover .pinment-share-capacity-tooltip,
+.pinment-share-capacity-help:focus .pinment-share-capacity-tooltip {
+  display: block;
 }
 .pinment-share-capacity-bar {
   height: 4px;
@@ -1871,9 +1924,11 @@ export function createShareModal({ shareUrl, urlSize, maxUrlBytes, onExportJson,
   let fillClass = 'pinment-share-capacity-fill';
   if (pct >= 80 || overLimit) fillClass += ' pinment-share-capacity-fill-danger';
   else if (pct >= 60) fillClass += ' pinment-share-capacity-fill-warn';
+  const tooltipText = 'Pinment stores annotations in the URL itself \u2014 no server needed. Browsers limit URL length to roughly 8KB, so very large annotations may need JSON export instead.';
+  const helpIcon = `<span class="pinment-share-capacity-help" tabindex="0" role="button" aria-label="What is the URL limit?">?<span class="pinment-share-capacity-tooltip">${tooltipText}</span></span>`;
   capacityEl.innerHTML = overLimit
-    ? `<strong style="color:#e53e3e">URL is ${Math.round(urlSize / 1024)}KB \u2014 exceeds the ~${Math.round(maxUrlBytes / 1024)}KB limit.</strong> Remove some annotations or shorten comments, or use JSON export below.`
-    : `${Math.round(urlSize / 1024 * 10) / 10}KB of ~${Math.round(maxUrlBytes / 1024)}KB URL limit (${pct}%)`;
+    ? `<strong style="color:#e53e3e">URL is ${Math.round(urlSize / 1024)}KB \u2014 exceeds the ~${Math.round(maxUrlBytes / 1024)}KB limit.</strong> Remove some annotations or shorten comments, or use JSON export below. ${helpIcon}`
+    : `${Math.round(urlSize / 1024 * 10) / 10}KB of ~${Math.round(maxUrlBytes / 1024)}KB URL limit (${pct}%) ${helpIcon}`;
   const capacityBar = document.createElement('div');
   capacityBar.className = 'pinment-share-capacity-bar';
   capacityBar.innerHTML = `<div class="${fillClass}" style="width:${pct}%"></div>`;
@@ -1900,7 +1955,7 @@ export function createShareModal({ shareUrl, urlSize, maxUrlBytes, onExportJson,
 
   const jsonBtn = document.createElement('button');
   jsonBtn.className = 'pinment-modal-btn pinment-modal-btn-secondary';
-  jsonBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M8 2v8"/><path d="M4 8l4 4 4-4"/></svg> Download JSON';
+  jsonBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M8 2v8"/><path d="M4 8l4 4 4-4"/></svg> Download JSON';
   body.appendChild(jsonBtn);
 
   // --- Divider ---
@@ -1917,7 +1972,7 @@ export function createShareModal({ shareUrl, urlSize, maxUrlBytes, onExportJson,
 
   const pdfBtn = document.createElement('button');
   pdfBtn.className = 'pinment-modal-btn pinment-modal-btn-secondary';
-  pdfBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px"><rect x="2" y="1" width="12" height="14" rx="1"/><path d="M5 5h6"/><path d="M5 8h6"/><path d="M5 11h3"/></svg> Download PDF';
+  pdfBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="1" width="12" height="14" rx="1"/><path d="M5 5h6"/><path d="M5 8h6"/><path d="M5 11h3"/></svg> Download PDF';
   body.appendChild(pdfBtn);
 
   modal.appendChild(body);
