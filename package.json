@@ -23,10 +23,10 @@
   },
   "homepage": "https://github.com/khawkins98/pinment#readme",
   "devDependencies": {
-    "esbuild": "^0.27.3",
-    "jsdom": "^28.1.0",
-    "vite": "^7.3.1",
-    "vitest": "^4.0.18"
+    "esbuild": "^0.28.0",
+    "jsdom": "^29.1.1",
+    "vite": "^8.0.0",
+    "vitest": "^4.1.5"
   },
   "dependencies": {
     "lz-string": "^1.5.0"
