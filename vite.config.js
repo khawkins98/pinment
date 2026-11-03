@@ -14,7 +14,7 @@ function bookmarkletPlugin() {
 
   async function buildBookmarklet() {
     const result = await esbuild({
-      entryPoints: [path.resolve(__dirname, 'src/bookmarklet/index.js')],
+      entryPoints: [path.resolve(import.meta.dirname, 'src/bookmarklet/index.js')],
       bundle: true,
       minify: true,
       format: 'iife',
@@ -27,7 +27,7 @@ function bookmarkletPlugin() {
 
   /** Files under src/ that get bundled into the bookmarklet */
   function isBookmarkletSource(filePath) {
-    const rel = path.relative(path.resolve(__dirname, 'src'), filePath);
+    const rel = path.relative(path.resolve(import.meta.dirname, 'src'), filePath);
     if (rel.startsWith('..')) return false;
     return rel.startsWith('bookmarklet') || ['state.js', 'selector.js', 'version.js'].includes(rel);
   }
