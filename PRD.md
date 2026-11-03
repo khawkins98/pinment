@@ -21,8 +21,14 @@ Pinment is a client-side bookmarklet that injects an annotation UI onto any live
 - A recipient can view annotations without installing anything or creating an account
 - The tool is maintainable with zero ongoing cost
 
+## Key Capabilities
+
+- **Bookmarklet & Browser Extension**: Run as a zero-install bookmarklet or load the Manifest V3 browser extension for strict-CSP sites
+- **Draft Auto-Save & Recovery**: Ephemeral local storage auto-saves in-progress reviews per-URL, offering instant resume upon reopening
+- **Dynamic Reflow Detection**: Body-level `ResizeObserver` detects layout shifts and realigns pins smoothly
+- **Zero-Backend Architecture**: All state is compressed into URL fragments via lz-string or exported to JSON/PDF
+
 ## Future ideas
 
-- Browser extension to bypass CSP restrictions and enable richer UX
 - GitHub Issues export: export pins directly as GitHub issues
 - Multi-reviewer comparison: merge/diff annotations from multiple share URLs
