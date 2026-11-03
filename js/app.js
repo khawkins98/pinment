@@ -16,6 +16,62 @@ export function parseHashData(hash) {
   return validateState(state);
 }
 
+export function parseUrlData(hash = '', search = '') {
+  if (hash && hash.startsWith('#data=')) {
+    return parseHashData(hash);
+  }
+  if (search) {
+    try {
+      const searchStr = search.startsWith('?') ? search.slice(1) : search;
+      const params = new URLSearchParams(searchStr);
+      const data = params.get('data');
+      if (data) {
+        return parseHashData('#data=' + data);
+      }
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+export function normalizeUrlPath() {
+  if (typeof window === 'undefined' || !window.location) return;
+  const pathname = window.location.pathname || '';
+  const search = window.location.search || '';
+  const hash = window.location.hash || '';
+
+  let cleanPath = pathname;
+  if (pathname.endsWith('/index.html')) {
+    cleanPath = pathname.replace(/\/index\.html$/, '/');
+  }
+
+  // If data was passed via query parameter ?data=..., normalize to #data= fragment
+  if (!hash && search) {
+    try {
+      const searchStr = search.startsWith('?') ? search.slice(1) : search;
+      const params = new URLSearchParams(searchStr);
+      const dataVal = params.get('data');
+      if (dataVal) {
+        params.delete('data');
+        const remainingSearch = params.toString() ? `?${params.toString()}` : '';
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', cleanPath + remainingSearch + '#data=' + dataVal);
+        }
+        return;
+      }
+    } catch {
+      // Ignore URL parsing errors
+    }
+  }
+
+  if (cleanPath !== pathname) {
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', cleanPath + search + hash);
+    }
+  }
+}
+
 export function renderViewer(state) {
   const viewer = document.getElementById('viewer');
   const install = document.getElementById('install');
@@ -94,7 +150,7 @@ export function renderViewer(state) {
   copyBtn.className = 'viewer-btn viewer-btn-secondary';
   copyBtn.textContent = 'Copy share URL';
   copyBtn.addEventListener('click', () => {
-    const shareUrl = window.location.href;
+    const shareUrl = window.location.href.replace(/\/index\.html(?=[?#]|$)/, '/');
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(shareUrl).then(() => {
         copyBtn.textContent = 'Copied!';
@@ -241,7 +297,7 @@ export function renderError(message) {
 
 function showOpenTargetModal(targetUrl, state) {
   // Copy share URL to clipboard so bookmarklet can auto-detect it
-  const shareUrl = window.location.href;
+  const shareUrl = window.location.href.replace(/\/index\.html(?=[?#]|$)/, '/');
   const clipboardOk = navigator.clipboard && navigator.clipboard.writeText;
   if (clipboardOk) {
     navigator.clipboard.writeText(shareUrl).catch(() => {});
@@ -332,6 +388,8 @@ function showOpenTargetModal(targetUrl, state) {
 }
 
 export function init() {
+  normalizeUrlPath();
+
   // Set the bookmarklet link to a tiny loader that dynamically loads
   // the full script from this site. This keeps the bookmark URL under
   // browser limits (~65 KB in Firefox) regardless of how large the
@@ -346,9 +404,11 @@ export function init() {
     }
   }
 
-  const hash = window.location.hash;
-  if (hash && hash.startsWith('#data=')) {
-    const state = parseHashData(hash);
+  const hash = window.location.hash || '';
+  const search = window.location.search || '';
+  const hasData = (hash && hash.startsWith('#data=')) || (search && (search.startsWith('?data=') || search.includes('&data=')));
+  if (hasData) {
+    const state = parseUrlData(hash, search);
     if (state) {
       renderViewer(state);
     } else {
