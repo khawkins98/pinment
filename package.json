@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:bookmarklet": "node scripts/build-bookmarklet.js"
+    "build:bookmarklet": "node scripts/build-bookmarklet.js",
+    "build:extension": "node scripts/build-extension.js"
   },
   "repository": {
     "type": "git",

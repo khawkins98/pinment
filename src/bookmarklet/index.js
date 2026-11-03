@@ -5,7 +5,7 @@
  * allows pin placement, and provides share/restore functionality.
  * All DOM elements use the pinment- class namespace to avoid conflicts.
  */
-import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal, createMobileWarningModal, createMinimizedButton, createExitConfirmModal, createShareModal, repositionPin, highlightPinTarget, clearPinHighlight } from './ui.js';
+import { buildStyles, createPinElement, createPanel, calculatePinPosition, createWelcomeModal, createDocsSiteModal, createMobileWarningModal, createMinimizedButton, createExitConfirmModal, createShareModal, repositionPin, highlightPinTarget, clearPinHighlight, saveDraft, loadDraft, clearDraft } from './ui.js';
 import { compress, decompress, parseShareUrl, validateState, createShareUrl, estimateUrlSize, exportStateAsJson, importStateFromJson, SCHEMA_VERSION, MAX_URL_BYTES } from '../state.js';
 import { exportPdf } from './pdf-export.js';
 import { detectEnv } from '../selector.js';
@@ -17,7 +17,15 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
 
 (async function pinment() {
   // Toggle off if already active
-  if (document.getElementById(PANEL_ID)) {
+  if (typeof window !== 'undefined' && window.__PINMENT_ACTIVE__) {
+    try {
+      window.__PINMENT_ACTIVE__.deactivate();
+    } catch {
+      // Ignore cleanup error
+    }
+    return;
+  }
+  if (document.getElementById(PANEL_ID) || document.querySelector('.pinment-modal-backdrop')) {
     deactivate();
     return;
   }
@@ -45,6 +53,14 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   styleEl.id = STYLE_ID;
   styleEl.textContent = buildStyles();
   document.head.appendChild(styleEl);
+
+  if (typeof window !== 'undefined') {
+    window.__PINMENT_ACTIVE__ = {
+      deactivate: () => {
+        deactivate();
+      },
+    };
+  }
 
   // Detect if running on the Pinment docs site itself
   if (document.body.hasAttribute('data-pinment-site')) {
@@ -88,6 +104,18 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   }
   window.addEventListener('resize', onResize);
 
+  let bodyObserver = null;
+  if (typeof ResizeObserver !== 'undefined' && document.body) {
+    try {
+      bodyObserver = new ResizeObserver(() => {
+        onResize();
+      });
+      bodyObserver.observe(document.body);
+    } catch {
+      // Ignore if ResizeObserver is restricted
+    }
+  }
+
   // Stored author name
   let authorName = '';
   try {
@@ -127,7 +155,8 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   }
 
   // Show welcome modal for restoring annotations or starting fresh
-  const { modal, promise } = createWelcomeModal(parseShareUrl, validateState);
+  const savedDraft = loadDraft();
+  const { modal, promise } = createWelcomeModal(parseShareUrl, validateState, savedDraft);
   document.body.appendChild(modal);
 
   promise.then((result) => {
@@ -137,8 +166,19 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       return;
     }
 
+    if (result === null) {
+      // User chose to start fresh on this page
+      clearDraft();
+      startSession(null);
+      return;
+    }
+
     let loaded = null;
-    if (typeof result === 'string') {
+    if (result && result.isDraft) {
+      // User chose to resume saved draft
+      loaded = { pins: result.pins };
+      state.nextId = result.nextId || state.nextId;
+    } else if (typeof result === 'string') {
       // Share URL
       const raw = parseShareUrl(result);
       loaded = raw ? validateState(raw) : null;
@@ -204,6 +244,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     for (const pin of loaded.pins) {
       state.pins.push(pin);
       addPinToPage(pin);
+      persistDraft();
     }
     state.nextId = loaded.pins.length > 0 ? Math.max(...loaded.pins.map((p) => p.id)) + 1 : 1;
     if (loaded.env) {
@@ -266,6 +307,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
           pin.fy = pos.fy;
 
           repositionPin(pinEl, pin);
+          persistDraft();
         } else {
           scrollToComment(pin.id);
         }
@@ -299,6 +341,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       };
       state.pins.push(pin);
       addPinToPage(pin);
+      persistDraft();
 
       // Remove overlay after placing pin
       overlay.remove();
@@ -346,6 +389,10 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     }
   }
 
+  function persistDraft() {
+    saveDraft(state.pins, state.nextId);
+  }
+
   function handleSave(pinId, text, author) {
     const pin = state.pins.find((p) => p.id === pinId);
     if (pin) {
@@ -357,6 +404,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       } catch {
         // Ignore storage errors
       }
+      persistDraft();
     }
   }
 
@@ -366,6 +414,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     // Remove pin element from page
     const pinEl = pinContainer.querySelector(`[data-pinment-id="${pinId}"]`);
     if (pinEl) pinEl.remove();
+    persistDraft();
     renderPanel();
   }
 
@@ -377,6 +426,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       } else {
         delete pin.c;
       }
+      persistDraft();
     }
   }
 
@@ -391,6 +441,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     if (pinEl) {
       pinEl.classList.toggle('pinment-pin-resolved', !!pin?.resolved);
     }
+    persistDraft();
     renderPanel();
   }
 
@@ -403,6 +454,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       authorName = author;
       try { localStorage.setItem(STORAGE_KEY_AUTHOR, author); } catch { /* */ }
     }
+    persistDraft();
     renderPanel();
   }
 
@@ -427,6 +479,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
         state.pins = [];
         pinContainer.innerHTML = '';
         loadState(loaded);
+        persistDraft();
         renderPanel();
       };
       reader.readAsText(file);
@@ -441,6 +494,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     state.pins = [];
     state.nextId = 1;
     pinContainer.innerHTML = '';
+    clearDraft();
     renderPanel();
   }
 
@@ -495,17 +549,48 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     }
   }
 
+  function cleanPinForExport(pin) {
+    const p = {
+      id: pin.id,
+      fx: Math.round(pin.fx),
+      fy: Math.round(pin.fy),
+      text: pin.text || '',
+    };
+    if (pin.s) {
+      p.s = pin.s;
+      if (pin.ox !== null && pin.ox !== undefined) p.ox = pin.ox;
+      if (pin.oy !== null && pin.oy !== undefined) p.oy = pin.oy;
+    }
+    if (pin.author) p.author = pin.author;
+    if (pin.c) p.c = pin.c;
+    if (pin.resolved) p.resolved = true;
+    if (Array.isArray(pin.replies) && pin.replies.length > 0) {
+      const validReplies = pin.replies
+        .filter((r) => r && (r.text?.trim() || r.author))
+        .map((r) => {
+          const reply = { text: r.text || '' };
+          if (r.author) reply.author = r.author;
+          return reply;
+        });
+      if (validReplies.length > 0) {
+        p.replies = validReplies;
+      }
+    }
+    return p;
+  }
+
   function buildStateData() {
     return {
       v: SCHEMA_VERSION,
       url: window.location.href.split('#')[0],
       viewport: state.viewportWidth,
       env: state.env,
-      pins: state.pins,
+      pins: state.pins.map(cleanPinForExport),
     };
   }
 
   function copyShareUrlToClipboard() {
+    clearDraft();
     const data = buildStateData();
     const size = estimateUrlSize(data);
     if (size > MAX_URL_BYTES) {
@@ -609,6 +694,13 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   }
 
   function deactivate() {
+    if (typeof window !== 'undefined' && window.__PINMENT_ACTIVE__) {
+      window.__PINMENT_ACTIVE__ = null;
+    }
+    if (bodyObserver) {
+      bodyObserver.disconnect();
+      bodyObserver = null;
+    }
     document.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('beforeunload', onBeforeUnload);
     window.removeEventListener('resize', onResize);
@@ -624,5 +716,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     if (container) container.remove();
     const minBtn = document.getElementById(MINIMIZED_BTN_ID);
     if (minBtn) minBtn.remove();
+    const backdrops = document.querySelectorAll('.pinment-modal-backdrop');
+    for (const b of backdrops) b.remove();
   }
 })();

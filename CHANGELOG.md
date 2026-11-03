@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Modular bookmarklet architecture**: Decomposed monolithic `src/bookmarklet/ui.js` into focused modules (`styles.js`, `pins.js`, `panel.js`, `modals.js`, `draft.js`) with `ui.js` as a re-export facade
+- **Ephemeral local draft auto-save & recovery**: Automatically caches active pin annotations to `localStorage` per URL (7-day TTL); provides one-click resume option in the welcome dialog if an unsaved session is detected
+- **CSS isolation (`all: initial` reset)**: Protects UI panels, modals, and mode bar against aggressive host-page CSS rules while preserving DOM querying and screenshot export
+- **Dynamic page reflow detection**: Integrated `ResizeObserver` on `document.body` to automatically realign pins when page layout shifts without waiting for window resize events
+- **Manifest V3 browser extension**: Added unpackable Chrome/Firefox MV3 extension (`extension/` and `npm run build:extension`) to bypass strict Content-Security-Policy (CSP) headers that block bookmarklet injection
+- **Payload size optimization**: Strips empty arrays and default values during export serialization to conserve URL byte budget
 - Point default share URL generation at canonical domain (`https://www.allaboutken.com/pinment/`)
 - Preserve full path, query string, and `#data=` hash fragment during GitHub Pages redirects
 - Normalize address bar by stripping `/index.html` via `history.replaceState` so copied links remain canonical
