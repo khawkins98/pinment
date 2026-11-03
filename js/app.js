@@ -51,8 +51,9 @@ export function normalizeUrlPath() {
     try {
       const searchStr = search.startsWith('?') ? search.slice(1) : search;
       const params = new URLSearchParams(searchStr);
-      const dataVal = params.get('data');
+      let dataVal = params.get('data');
       if (dataVal) {
+        dataVal = dataVal.replace(/ /g, '+');
         params.delete('data');
         const remainingSearch = params.toString() ? `?${params.toString()}` : '';
         if (window.history && window.history.replaceState) {
@@ -406,12 +407,21 @@ export function init() {
 
   const hash = window.location.hash || '';
   const search = window.location.search || '';
-  const hasData = (hash && hash.startsWith('#data=')) || (search && (search.startsWith('?data=') || search.includes('&data=')));
-  if (hasData) {
-    const state = parseUrlData(hash, search);
-    if (state) {
-      renderViewer(state);
-    } else {
+  const state = parseUrlData(hash, search);
+  if (state) {
+    renderViewer(state);
+  } else {
+    let hasAttemptedData = false;
+    if (hash && hash.startsWith('#data=')) {
+      hasAttemptedData = true;
+    } else if (search) {
+      try {
+        hasAttemptedData = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search).has('data');
+      } catch {
+        hasAttemptedData = false;
+      }
+    }
+    if (hasAttemptedData) {
       renderError('This share link appears to be corrupted or incomplete. Ask the sender for a new link.');
     }
   }

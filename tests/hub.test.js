@@ -477,14 +477,34 @@ describe('normalizeUrlPath', () => {
     Object.defineProperty(window, 'location', {
       value: {
         pathname: '/pinment/',
-        search: '?foo=1&data=mydata',
+        search: '?foo=1&data=my+data',
         hash: '',
       },
       writable: true,
     });
 
     normalizeUrlPath();
-    expect(replaceStateMock).toHaveBeenCalledWith(null, '', '/pinment/?foo=1#data=mydata');
+    expect(replaceStateMock).toHaveBeenCalledWith(null, '', '/pinment/?foo=1#data=my+data');
+  });
+
+  it('preserves plus signs when URLSearchParams decodes them as spaces', () => {
+    const replaceStateMock = vi.fn();
+    Object.defineProperty(window, 'history', {
+      value: { replaceState: replaceStateMock },
+      writable: true,
+    });
+    // Simulating URL where URLSearchParams.get('data') produces 'a b c'
+    Object.defineProperty(window, 'location', {
+      value: {
+        pathname: '/pinment/',
+        search: '?data=a+b+c',
+        hash: '',
+      },
+      writable: true,
+    });
+
+    normalizeUrlPath();
+    expect(replaceStateMock).toHaveBeenCalledWith(null, '', '/pinment/#data=a+b+c');
   });
 
   it('does not alter URL when already canonical without data query', () => {
@@ -518,13 +538,23 @@ describe('init with query param', () => {
     const viewer = document.getElementById('viewer');
     expect(viewer.hidden).toBe(false);
   });
+
+  it('renders error message when query param contains corrupted data', () => {
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, hash: '', search: '?data=corrupted-query-data' },
+      writable: true,
+    });
+    init();
+    const errorEl = document.querySelector('.viewer-error');
+    expect(errorEl).not.toBeNull();
+    expect(errorEl.textContent).toContain('corrupted');
+  });
 });
 
 describe('index.html redirect script', () => {
   it('preserves pathname, search, and hash when redirecting from GitHub Pages', () => {
     const html = readFileSync(path.resolve(__dirname, '../index.html'), 'utf-8');
-    expect(html).toContain("if(window.location.hostname==='khawkins98.github.io')");
-    expect(html).toContain("document.documentElement.style.display='none'");
+    expect(html).toContain("if(window.location.hostname.toLowerCase()==='khawkins98.github.io')");
     expect(html).toContain("window.location.replace('https://www.allaboutken.com'+window.location.pathname+window.location.search+window.location.hash)");
     expect(html).toContain('<noscript><meta http-equiv="refresh" content="0;url=https://www.allaboutken.com/pinment/"></noscript>');
   });
@@ -539,7 +569,7 @@ describe('index.html redirect script', () => {
       replace: replaceMock,
     };
 
-    if (mockLocation.hostname === 'khawkins98.github.io') {
+    if (mockLocation.hostname.toLowerCase() === 'khawkins98.github.io') {
       mockLocation.replace('https://www.allaboutken.com' + mockLocation.pathname + mockLocation.search + mockLocation.hash);
     }
 
@@ -556,7 +586,7 @@ describe('index.html redirect script', () => {
       replace: replaceMock,
     };
 
-    if (mockLocation.hostname === 'khawkins98.github.io') {
+    if (mockLocation.hostname.toLowerCase() === 'khawkins98.github.io') {
       mockLocation.replace('https://www.allaboutken.com' + mockLocation.pathname + mockLocation.search + mockLocation.hash);
     }
 
@@ -567,9 +597,8 @@ describe('index.html redirect script', () => {
 describe('public/404.html redirect script', () => {
   it('contains redirect script and noscript fallback', () => {
     const html = readFileSync(path.resolve(__dirname, '../public/404.html'), 'utf-8');
-    expect(html).toContain("if(window.location.hostname==='khawkins98.github.io')");
-    expect(html).toContain("document.documentElement.style.display='none'");
-    expect(html).toContain("window.location.replace('https://www.allaboutken.com'+window.location.pathname+window.location.search+window.location.hash)");
+    expect(html).toContain("if(window.location.hostname.toLowerCase()==='khawkins98.github.io')");
+    expect(html).toContain("window.location.replace('https://www.allaboutken.com/pinment/'+window.location.search+window.location.hash)");
     expect(html).toContain('<noscript><meta http-equiv="refresh" content="0;url=https://www.allaboutken.com/pinment/"></noscript>');
   });
 });

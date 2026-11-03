@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Point default share URL generation at canonical domain (`https://www.allaboutken.com/pinment/`)
+- Preserve full path, query string, and `#data=` hash fragment during GitHub Pages redirects
+- Normalize address bar by stripping `/index.html` via `history.replaceState` so copied links remain canonical
+- Support `?data=` query parameter fallback when hash fragments are altered by external tools, auto-migrating them to the hash
+- Make decompression resilient against spaces and `%20` character substitution
+- Add `public/404.html` on GitHub Pages to forward broken routes to the canonical domain preserving annotations
+- Add `<noscript>` meta refresh fallback on redirect pages
+
 ## 1.2.0 — 2026-02-26
 
 - Unified **Share & Export modal** replaces scattered footer buttons — copy share URL, download JSON, and download PDF all in one place

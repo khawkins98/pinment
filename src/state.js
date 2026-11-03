@@ -19,8 +19,9 @@ export function compress(state) {
 }
 
 export function decompress(compressed) {
-  if (!compressed) return null;
-  const json = LZString.decompressFromEncodedURIComponent(compressed);
+  if (!compressed || typeof compressed !== 'string') return null;
+  const normalized = compressed.replace(/%20/g, '+').replace(/ /g, '+');
+  const json = LZString.decompressFromEncodedURIComponent(normalized);
   if (!json) return null;
   try {
     return JSON.parse(json);
