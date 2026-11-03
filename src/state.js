@@ -5,7 +5,7 @@ export const MAX_URL_BYTES = 8000;
 
 export const PIN_CATEGORIES = ['text', 'layout', 'missing', 'question'];
 
-const DEFAULT_BASE_URL = 'https://khawkins98.github.io/pinment/';
+export const DEFAULT_BASE_URL = 'https://www.allaboutken.com/pinment/';
 
 export function createState(url, viewport, pins = [], env = null) {
   const state = { v: SCHEMA_VERSION, url, viewport, pins };
@@ -19,8 +19,9 @@ export function compress(state) {
 }
 
 export function decompress(compressed) {
-  if (!compressed) return null;
-  const json = LZString.decompressFromEncodedURIComponent(compressed);
+  if (!compressed || typeof compressed !== 'string') return null;
+  const normalized = compressed.replace(/%20/g, '+').replace(/ /g, '+');
+  const json = LZString.decompressFromEncodedURIComponent(normalized);
   if (!json) return null;
   try {
     return JSON.parse(json);

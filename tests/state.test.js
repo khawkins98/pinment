@@ -98,10 +98,22 @@ describe('compress / decompress', () => {
     expect(result.pins[0].text).toBe('修正してください 🎉');
     expect(result.pins[0].author).toBe('日本');
   });
+
+  it('recovers data when compressed string contains spaces or %20 instead of +', () => {
+    const state = createState('https://example.com', 1440, [
+      v2Pin({ author: 'Ken', text: 'Special test with & symbols + spaces' }),
+    ]);
+    const compressed = compress(state);
+    // Simulate query param / url encoding replacing + with space or %20
+    const withSpaces = compressed.replace(/\+/g, ' ');
+    const withPercent20 = compressed.replace(/\+/g, '%20');
+    expect(decompress(withSpaces)).toEqual(state);
+    expect(decompress(withPercent20)).toEqual(state);
+  });
 });
 
 describe('createShareUrl / parseShareUrl', () => {
-  const baseUrl = 'https://khawkins98.github.io/pinment/';
+  const baseUrl = 'https://www.allaboutken.com/pinment/';
 
   it('creates a valid URL with #data= fragment', () => {
     const state = createState('https://example.com', 1440);
@@ -133,7 +145,7 @@ describe('createShareUrl / parseShareUrl', () => {
   it('uses default base URL when none provided', () => {
     const state = createState('https://example.com', 1440);
     const url = createShareUrl(state);
-    expect(url).toContain('#data=');
+    expect(url.startsWith('https://www.allaboutken.com/pinment/#data=')).toBe(true);
   });
 });
 

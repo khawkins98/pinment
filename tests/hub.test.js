@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderViewer, parseHashData, renderError, init } from '../js/app.js';
+import { readFileSync } from 'fs';
+import path from 'path';
+import { renderViewer, parseHashData, parseUrlData, normalizeUrlPath, renderError, init } from '../js/app.js';
 import { createState, compress } from '../src/state.js';
 
 // Helper to create v2-format pins
@@ -416,5 +418,187 @@ describe('init', () => {
       writable: true,
     });
     expect(() => init()).not.toThrow();
+  });
+});
+
+describe('parseUrlData', () => {
+  it('parses valid data from hash', () => {
+    const state = createState('https://example.com', 1440, [v2Pin({ id: 1, text: 'Test' })]);
+    const hash = `#data=${compress(state)}`;
+    expect(parseUrlData(hash, '')).toEqual(state);
+  });
+
+  it('parses valid data from query parameter ?data=', () => {
+    const state = createState('https://example.com', 1440, [v2Pin({ id: 1, text: 'Test' })]);
+    const search = `?data=${compress(state)}`;
+    expect(parseUrlData('', search)).toEqual(state);
+  });
+
+  it('prefers hash over query parameter if both present', () => {
+    const state1 = createState('https://example.com', 1440, [v2Pin({ id: 1, text: 'From Hash' })]);
+    const state2 = createState('https://example.com', 1440, [v2Pin({ id: 2, text: 'From Search' })]);
+    const hash = `#data=${compress(state1)}`;
+    const search = `?data=${compress(state2)}`;
+    expect(parseUrlData(hash, search)).toEqual(state1);
+  });
+
+  it('returns null when neither has valid data', () => {
+    expect(parseUrlData('', '')).toBeNull();
+    expect(parseUrlData('#other=1', '?foo=bar')).toBeNull();
+  });
+});
+
+describe('normalizeUrlPath', () => {
+  it('strips /index.html from pathname preserving query and hash', () => {
+    const replaceStateMock = vi.fn();
+    Object.defineProperty(window, 'history', {
+      value: { replaceState: replaceStateMock },
+      writable: true,
+    });
+    Object.defineProperty(window, 'location', {
+      value: {
+        pathname: '/pinment/index.html',
+        search: '?foo=1',
+        hash: '#data=abc',
+      },
+      writable: true,
+    });
+
+    normalizeUrlPath();
+    expect(replaceStateMock).toHaveBeenCalledWith(null, '', '/pinment/?foo=1#data=abc');
+  });
+
+  it('converts ?data= query param to #data= fragment and strips data param from search', () => {
+    const replaceStateMock = vi.fn();
+    Object.defineProperty(window, 'history', {
+      value: { replaceState: replaceStateMock },
+      writable: true,
+    });
+    Object.defineProperty(window, 'location', {
+      value: {
+        pathname: '/pinment/',
+        search: '?foo=1&data=my+data',
+        hash: '',
+      },
+      writable: true,
+    });
+
+    normalizeUrlPath();
+    expect(replaceStateMock).toHaveBeenCalledWith(null, '', '/pinment/?foo=1#data=my+data');
+  });
+
+  it('preserves plus signs when URLSearchParams decodes them as spaces', () => {
+    const replaceStateMock = vi.fn();
+    Object.defineProperty(window, 'history', {
+      value: { replaceState: replaceStateMock },
+      writable: true,
+    });
+    // Simulating URL where URLSearchParams.get('data') produces 'a b c'
+    Object.defineProperty(window, 'location', {
+      value: {
+        pathname: '/pinment/',
+        search: '?data=a+b+c',
+        hash: '',
+      },
+      writable: true,
+    });
+
+    normalizeUrlPath();
+    expect(replaceStateMock).toHaveBeenCalledWith(null, '', '/pinment/#data=a+b+c');
+  });
+
+  it('does not alter URL when already canonical without data query', () => {
+    const replaceStateMock = vi.fn();
+    Object.defineProperty(window, 'history', {
+      value: { replaceState: replaceStateMock },
+      writable: true,
+    });
+    Object.defineProperty(window, 'location', {
+      value: {
+        pathname: '/pinment/',
+        search: '',
+        hash: '#data=abc',
+      },
+      writable: true,
+    });
+
+    normalizeUrlPath();
+    expect(replaceStateMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('init with query param', () => {
+  it('renders viewer when query param contains valid data', () => {
+    const state = createState('https://example.com', 1440, [v2Pin({ id: 1, text: 'Via Query' })]);
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, hash: '', search: `?data=${compress(state)}` },
+      writable: true,
+    });
+    init();
+    const viewer = document.getElementById('viewer');
+    expect(viewer.hidden).toBe(false);
+  });
+
+  it('renders error message when query param contains corrupted data', () => {
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, hash: '', search: '?data=corrupted-query-data' },
+      writable: true,
+    });
+    init();
+    const errorEl = document.querySelector('.viewer-error');
+    expect(errorEl).not.toBeNull();
+    expect(errorEl.textContent).toContain('corrupted');
+  });
+});
+
+describe('index.html redirect script', () => {
+  it('preserves pathname, search, and hash when redirecting from GitHub Pages', () => {
+    const html = readFileSync(path.resolve(__dirname, '../index.html'), 'utf-8');
+    expect(html).toContain("if(window.location.hostname.toLowerCase()==='khawkins98.github.io')");
+    expect(html).toContain("window.location.replace('https://www.allaboutken.com'+window.location.pathname+window.location.search+window.location.hash)");
+    expect(html).toContain('<noscript><meta http-equiv="refresh" content="0;url=https://www.allaboutken.com/pinment/"></noscript>');
+  });
+
+  it('redirects with full path and hash when on khawkins98.github.io', () => {
+    const replaceMock = vi.fn();
+    const mockLocation = {
+      hostname: 'khawkins98.github.io',
+      pathname: '/pinment/',
+      search: '',
+      hash: '#data=test1234',
+      replace: replaceMock,
+    };
+
+    if (mockLocation.hostname.toLowerCase() === 'khawkins98.github.io') {
+      mockLocation.replace('https://www.allaboutken.com' + mockLocation.pathname + mockLocation.search + mockLocation.hash);
+    }
+
+    expect(replaceMock).toHaveBeenCalledWith('https://www.allaboutken.com/pinment/#data=test1234');
+  });
+
+  it('does not redirect when on canonical domain', () => {
+    const replaceMock = vi.fn();
+    const mockLocation = {
+      hostname: 'www.allaboutken.com',
+      pathname: '/pinment/',
+      search: '',
+      hash: '#data=test1234',
+      replace: replaceMock,
+    };
+
+    if (mockLocation.hostname.toLowerCase() === 'khawkins98.github.io') {
+      mockLocation.replace('https://www.allaboutken.com' + mockLocation.pathname + mockLocation.search + mockLocation.hash);
+    }
+
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('public/404.html redirect script', () => {
+  it('contains redirect script and noscript fallback', () => {
+    const html = readFileSync(path.resolve(__dirname, '../public/404.html'), 'utf-8');
+    expect(html).toContain("if(window.location.hostname.toLowerCase()==='khawkins98.github.io')");
+    expect(html).toContain("window.location.replace('https://www.allaboutken.com/pinment/'+window.location.search+window.location.hash)");
+    expect(html).toContain('<noscript><meta http-equiv="refresh" content="0;url=https://www.allaboutken.com/pinment/"></noscript>');
   });
 });

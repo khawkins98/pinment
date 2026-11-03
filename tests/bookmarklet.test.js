@@ -913,6 +913,18 @@ describe('createWelcomeModal layout', () => {
     expect(dividerIdx).toBeGreaterThan(-1);
     expect(startIdx).toBeLessThan(dividerIdx);
   });
+
+  it('points "What is Pinment?" link to canonical site', () => {
+    const { modal } = createWelcomeModal();
+    const link = modal.querySelector('.pinment-modal-link');
+    expect(link.href).toBe('https://www.allaboutken.com/pinment/');
+  });
+
+  it('uses canonical URL in input placeholder', () => {
+    const { modal } = createWelcomeModal();
+    const input = modal.querySelector('.pinment-modal-input');
+    expect(input.placeholder).toBe('https://www.allaboutken.com/pinment/#data=...');
+  });
 });
 
 describe('createMinimizedButton', () => {

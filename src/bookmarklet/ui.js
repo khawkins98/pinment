@@ -1477,7 +1477,7 @@ export function createWelcomeModal(validateUrl, validateImport) {
 
   const link = document.createElement('a');
   link.className = 'pinment-modal-link';
-  link.href = 'https://khawkins98.github.io/pinment/';
+  link.href = 'https://www.allaboutken.com/pinment/';
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
   link.textContent = 'What is Pinment?';
@@ -1526,7 +1526,7 @@ export function createWelcomeModal(validateUrl, validateImport) {
   const input = document.createElement('input');
   input.className = 'pinment-modal-input';
   input.type = 'text';
-  input.placeholder = 'https://khawkins98.github.io/pinment/#data=...';
+  input.placeholder = 'https://www.allaboutken.com/pinment/#data=...';
   input.setAttribute('autocomplete', 'off');
   inputRow.appendChild(input);
 
