@@ -5,7 +5,7 @@ export const MAX_URL_BYTES = 8000;
 
 export const PIN_CATEGORIES = ['text', 'layout', 'missing', 'question'];
 
-const DEFAULT_BASE_URL = 'https://khawkins98.github.io/pinment/';
+export const DEFAULT_BASE_URL = 'https://www.allaboutken.com/pinment/';
 
 export function createState(url, viewport, pins = [], env = null) {
   const state = { v: SCHEMA_VERSION, url, viewport, pins };

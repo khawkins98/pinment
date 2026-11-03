@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'fs';
+import path from 'path';
 import { renderViewer, parseHashData, renderError, init } from '../js/app.js';
 import { createState, compress } from '../src/state.js';
 
@@ -416,5 +418,47 @@ describe('init', () => {
       writable: true,
     });
     expect(() => init()).not.toThrow();
+  });
+});
+
+describe('index.html redirect script', () => {
+  it('preserves pathname, search, and hash when redirecting from GitHub Pages', () => {
+    const html = readFileSync(path.resolve(__dirname, '../index.html'), 'utf-8');
+    expect(html).toContain("if(window.location.hostname==='khawkins98.github.io')");
+    expect(html).toContain("window.location.replace('https://www.allaboutken.com'+window.location.pathname+window.location.search+window.location.hash)");
+  });
+
+  it('redirects with full path and hash when on khawkins98.github.io', () => {
+    const replaceMock = vi.fn();
+    const mockLocation = {
+      hostname: 'khawkins98.github.io',
+      pathname: '/pinment/',
+      search: '',
+      hash: '#data=test1234',
+      replace: replaceMock,
+    };
+
+    if (mockLocation.hostname === 'khawkins98.github.io') {
+      mockLocation.replace('https://www.allaboutken.com' + mockLocation.pathname + mockLocation.search + mockLocation.hash);
+    }
+
+    expect(replaceMock).toHaveBeenCalledWith('https://www.allaboutken.com/pinment/#data=test1234');
+  });
+
+  it('does not redirect when on canonical domain', () => {
+    const replaceMock = vi.fn();
+    const mockLocation = {
+      hostname: 'www.allaboutken.com',
+      pathname: '/pinment/',
+      search: '',
+      hash: '#data=test1234',
+      replace: replaceMock,
+    };
+
+    if (mockLocation.hostname === 'khawkins98.github.io') {
+      mockLocation.replace('https://www.allaboutken.com' + mockLocation.pathname + mockLocation.search + mockLocation.hash);
+    }
+
+    expect(replaceMock).not.toHaveBeenCalled();
   });
 });

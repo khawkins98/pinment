@@ -101,7 +101,7 @@ describe('compress / decompress', () => {
 });
 
 describe('createShareUrl / parseShareUrl', () => {
-  const baseUrl = 'https://khawkins98.github.io/pinment/';
+  const baseUrl = 'https://www.allaboutken.com/pinment/';
 
   it('creates a valid URL with #data= fragment', () => {
     const state = createState('https://example.com', 1440);
@@ -133,7 +133,7 @@ describe('createShareUrl / parseShareUrl', () => {
   it('uses default base URL when none provided', () => {
     const state = createState('https://example.com', 1440);
     const url = createShareUrl(state);
-    expect(url).toContain('#data=');
+    expect(url.startsWith('https://www.allaboutken.com/pinment/#data=')).toBe(true);
   });
 });
 
