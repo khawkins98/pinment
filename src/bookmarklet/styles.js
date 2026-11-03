@@ -9,10 +9,15 @@ export function buildStyles() {
   all: initial;
   box-sizing: border-box;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.4;
 }
 .pinment-panel *, .pinment-modal *, .pinment-minimized-btn *, .pinment-env-banner *, .pinment-mode-bar * {
   box-sizing: border-box;
   font-family: inherit;
+}
+[class^="pinment-"] svg {
+  display: inline-block;
+  vertical-align: middle;
 }
 .pinment-modal-btn-draft {
   background: #3182ce;

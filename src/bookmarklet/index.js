@@ -17,7 +17,15 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
 
 (async function pinment() {
   // Toggle off if already active
-  if (document.getElementById(PANEL_ID)) {
+  if (typeof window !== 'undefined' && window.__PINMENT_ACTIVE__) {
+    try {
+      window.__PINMENT_ACTIVE__.deactivate();
+    } catch {
+      // Ignore cleanup error
+    }
+    return;
+  }
+  if (document.getElementById(PANEL_ID) || document.querySelector('.pinment-modal-backdrop')) {
     deactivate();
     return;
   }
@@ -45,6 +53,14 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   styleEl.id = STYLE_ID;
   styleEl.textContent = buildStyles();
   document.head.appendChild(styleEl);
+
+  if (typeof window !== 'undefined') {
+    window.__PINMENT_ACTIVE__ = {
+      deactivate: () => {
+        deactivate();
+      },
+    };
+  }
 
   // Detect if running on the Pinment docs site itself
   if (document.body.hasAttribute('data-pinment-site')) {
@@ -540,18 +556,25 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
       fy: Math.round(pin.fy),
       text: pin.text || '',
     };
-    if (pin.s) p.s = pin.s;
-    if (pin.ox !== null && pin.ox !== undefined) p.ox = pin.ox;
-    if (pin.oy !== null && pin.oy !== undefined) p.oy = pin.oy;
+    if (pin.s) {
+      p.s = pin.s;
+      if (pin.ox !== null && pin.ox !== undefined) p.ox = pin.ox;
+      if (pin.oy !== null && pin.oy !== undefined) p.oy = pin.oy;
+    }
     if (pin.author) p.author = pin.author;
     if (pin.c) p.c = pin.c;
     if (pin.resolved) p.resolved = true;
     if (Array.isArray(pin.replies) && pin.replies.length > 0) {
-      p.replies = pin.replies.map((r) => {
-        const reply = { text: r.text || '' };
-        if (r.author) reply.author = r.author;
-        return reply;
-      });
+      const validReplies = pin.replies
+        .filter((r) => r && (r.text?.trim() || r.author))
+        .map((r) => {
+          const reply = { text: r.text || '' };
+          if (r.author) reply.author = r.author;
+          return reply;
+        });
+      if (validReplies.length > 0) {
+        p.replies = validReplies;
+      }
     }
     return p;
   }
@@ -585,7 +608,6 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   }
 
   function handleShareExport() {
-    clearDraft();
     const data = buildStateData();
     const size = estimateUrlSize(data);
     const shareUrl = size <= MAX_URL_BYTES ? createShareUrl(data) : '';
@@ -672,6 +694,9 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
   }
 
   function deactivate() {
+    if (typeof window !== 'undefined' && window.__PINMENT_ACTIVE__) {
+      window.__PINMENT_ACTIVE__ = null;
+    }
     if (bodyObserver) {
       bodyObserver.disconnect();
       bodyObserver = null;
@@ -691,5 +716,7 @@ const PIN_CONTAINER_ID = 'pinment-pin-container';
     if (container) container.remove();
     const minBtn = document.getElementById(MINIMIZED_BTN_ID);
     if (minBtn) minBtn.remove();
+    const backdrops = document.querySelectorAll('.pinment-modal-backdrop');
+    for (const b of backdrops) b.remove();
   }
 })();
