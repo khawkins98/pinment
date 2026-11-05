@@ -1,6 +1,6 @@
 # Pinment
 
-Pin comments to webpages you can access and share the annotations as a URL.
+Pin comments to any webpage. Share the annotations as a single URL.
 No Pinment backend or account is required.
 
 [Open Pinment](https://www.allaboutken.com/pinment/) · [Introducing Pinment](https://www.allaboutken.com/posts/20260225-introducing-pinment/) · [Changelog](CHANGELOG.md)

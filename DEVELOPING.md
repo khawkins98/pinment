@@ -140,4 +140,5 @@ schema, source ownership and command details here; update the relevant home
 instead of adding the same account to both pages. Keep the landing-page steps and
 shared-review hint consistent with those workflows. Check labels against the live
 UI/source and preserve credits, PRD and dated CHANGELOG/LEARNINGS records. Prefer
-specific limits to “works anywhere” or unlimited-capacity promises.
+clear product phrasing; put practical restrictions beside the affected task and
+keep compatibility and capacity claims specific.
