@@ -1,121 +1,72 @@
 # Pinment
 
-Pin comments to any live webpage. Share the annotations as a single URL. No backend, no accounts, no database.
+Pin comments to webpages you can access and share the annotations as a URL.
+No Pinment backend or account is required.
 
-**Try it:** [allaboutken.com/pinment](https://www.allaboutken.com/pinment/) | **Blog post:** [Introducing Pinment](https://www.allaboutken.com/posts/20260225-introducing-pinment/) | [Changelog](CHANGELOG.md)
+[Open Pinment](https://www.allaboutken.com/pinment/) · [Introducing Pinment](https://www.allaboutken.com/posts/20260225-introducing-pinment/) · [Changelog](CHANGELOG.md)
 
-## How it works
+## Start a review
 
-1. **Add the bookmarklet** -- drag the Pinment button to your bookmarks bar
-2. **Navigate to any page** -- published, staging, localhost, or behind auth
-3. **Drop pins & comment** -- click anywhere to place numbered pins with comments
-4. **Share the URL** -- hit Share to copy a link that reconstructs the full annotated view
+1. Open Pinment and drag its **Pinment** button to your bookmarks bar.
+2. Visit the page you want to review, then click that bookmarklet.
+3. Choose **Start annotating on this page**, click a location and save your comment.
+4. Choose **Share & Export**, then copy the share URL. If copying fails, select
+   the displayed URL and copy it manually.
 
-The URL *is* the review. Recipients open it, visit the page, click the bookmarklet, and see every pin right where you left it.
+You can drag pins, reply to comments, assign categories, resolve items and filter
+the list. Switch to **Browse (Esc)** to interact with the underlying page and
+**Add pins (N)** to place more pins.
 
-## Features
+## Open a shared review
 
-| Feature | Description |
-|---|---|
-| Pin comments | Drop numbered pins on any live webpage and attach comments |
-| Share as URL | All annotations compress into a single link via lz-string |
-| Element anchoring | Pins attach to DOM elements via CSS selectors, repositioning live on browser resize and dynamic reflows |
-| Draft auto-save | Active pins are automatically cached to local storage per-URL and can be recovered if the tab is reloaded |
-| Dynamic reflow tracking | `ResizeObserver` monitors body layout shifts and keeps pins aligned without waiting for window resize |
-| Element highlight | Hovering a pin or panel comment outlines the anchored DOM element |
-| Import & export JSON | Save annotation sessions as JSON files; import them back anytime |
-| Drag to reposition | Move pins after placing them -- no delete and re-create |
-| Thread replies | Reply to any pin to create a conversation thread |
-| Categories & status | Label pins (text, layout, missing, question) and mark as resolved |
-| Dynamic loading | Bookmarklet is a tiny loader (~200 chars) that fetches the full script from the host site, staying well under browser URL limits |
-| Browser extension (MV3) | Optional Manifest V3 browser extension to bypass strict Content-Security-Policy (CSP) headers |
-| Version display | Panel footer shows current version and release date |
-| Filter & sort | Filter pins by category, status, or author; sort by pin number, category, or status |
-| PDF export | Generate a PDF with full-page screenshot, pin markers, and comment appendix (CDN-loaded libraries) |
-| Mobile warning | Warns mobile users that Pinment is desktop-optimized; option to continue anyway |
-| Works anywhere | Bookmarklet or browser extension runs on any page you can visit |
+Open the shared URL to see the comment list. Choose **Open target page**, follow
+**Open page →**, then activate Pinment on that page to load the pins. You still
+need access to the target page; a review link does not bypass login or permissions.
 
-## Quick start
+If the pins do not load automatically, paste the original share URL into
+**Paste a share URL to load annotations** in the bookmarklet's welcome dialog
+and choose **Load**. Replies and edits need a newly shared URL; links are snapshots,
+not a live collaboration session.
 
-```bash
-npm install
-npm run dev              # local dev server
-npm test                 # run tests (vitest)
-npm run build            # production build (vite + esbuild bookmarklet)
-npm run build:extension  # build unpackable Chrome/Firefox MV3 extension
+## Sharing and storage
+
+Share links contain the target URL, comments, authors/replies and browser/viewport
+metadata. Compression is not encryption: anyone with the complete link can read
+that state. Check for sensitive comments or query-string tokens before sharing.
+
+Use **Download JSON** in Share & Export to keep a portable copy or handle a review
+that exceeds the app's 8,000-byte URL budget. JSON contains the same review data.
+Drafts are stored in the reviewed page's origin in this browser. Recovery can
+help after a reload, but storage can be blocked or cleared; it is not a backup.
+[Draft behavior](DEVELOPING.md#draft-persistence) is documented for contributors.
+
+**Download PDF** produces a screenshot/comment report and loads html2canvas and
+jsPDF from a CDN on demand. It needs network access; CSP or cross-origin image
+restrictions can prevent export or omit content.
+
+## Limits and the extension
+
+- Strict CSP can block the bookmarklet's external-script loader. The optional
+  [unpacked Chromium extension](DEVELOPING.md#build-the-extension) injects its
+  bundled script instead; browser-internal pages remain restricted.
+- Changed DOM elements can make pins fall back to saved pixel coordinates.
+  Check placement when revisiting a changed page or a different viewport.
+- Share state omits the target page's original URL fragment. For hash-routed pages,
+  navigate to the intended route separately before loading the review in Pinment.
+- The interface is desktop-oriented. Mobile displays a warning and lets you continue.
+
+## Develop locally
+
+Use **Node.js 24** and **Yarn 1.22**, matching CI and the committed lockfile:
+
+```sh
+yarn install --frozen-lockfile
+yarn dev
+yarn test
 ```
 
-## Project structure
-
-```
-src/state.js                  State schema v2, serialization, compression, import/export
-src/selector.js               CSS selector generation, environment detection
-src/version.js                Version and release date constants
-src/bookmarklet/index.js      Bookmarklet entry point (IIFE)
-src/bookmarklet/ui.js         Module re-export facade
-src/bookmarklet/draft.js      Local draft auto-save and recovery
-src/bookmarklet/styles.js     Injected CSS styles, SVG icons, and CSS reset
-src/bookmarklet/pins.js       Pin DOM elements, drag positioning, target highlighting
-src/bookmarklet/panel.js      Collapsible sidebar panel, pin listing, filter/sort
-src/bookmarklet/modals.js     Dialogs: welcome, share/export, exit confirm, device warning
-src/bookmarklet/pdf-export.js PDF export (html2canvas + jsPDF, CDN-loaded)
-extension/                    Manifest V3 browser extension source & icons
-js/app.js                     Hub site logic (viewer, import)
-css/style.css                 Hub site styles
-index.html                    Landing page and annotation viewer
-tests/                        Vitest + jsdom tests
-scripts/build-bookmarklet.js  Standalone bookmarklet build (esbuild)
-scripts/build-extension.js    Extension packager (esbuild bundle + manifest)
-vite.config.js                Vite config with bookmarklet build plugin
-.github/workflows/ci.yml      CI/CD: test, build, deploy to GitHub Pages
-```
-
-## State schema (v2)
-
-```json
-{
-  "v": 2,
-  "url": "https://example.com/page",
-  "viewport": 1440,
-  "env": { "ua": "C/130", "vp": [1440, 900], "dt": "d" },
-  "pins": [
-    {
-      "id": 1,
-      "s": "#main>p:nth-of-type(3)",
-      "ox": 0.45, "oy": 0.3,
-      "fx": 648, "fy": 832,
-      "author": "FL",
-      "text": "This heading is wrong",
-      "c": "text",
-      "resolved": false,
-      "replies": [
-        { "author": "KH", "text": "Fixed in latest push" }
-      ]
-    }
-  ]
-}
-```
-
-Pins anchor to DOM elements via CSS selectors (`s`) with offset ratios (`ox`/`oy`) within the element's bounding box. Pixel coordinates (`fx`/`fy`) serve as fallback when the selector can't resolve.
-
-## Technical decisions
-
-| Decision | Choice | Rationale |
-|---|---|---|
-| Bookmarklet vs. extension | Bookmarklet primary, MV3 extension optional | Bookmarklet requires no installation, works cross-browser; the optional MV3 browser extension allows bypassing strict Content Security Policies (CSP) |
-| Inline vs. dynamic loading | Dynamic `<script>` loader | Inline `javascript:` URI hit Firefox's ~65KB bookmark limit; a tiny loader fetches the full script from the host site, enabling instant updates without re-installing |
-| Live page vs. screenshot | Live page | Pins bind to real DOM elements; no CORS issues with screenshots |
-| URL hash vs. backend | URL hash (lz-string) | Zero infrastructure; shareable via any channel |
-| Element selectors vs. pixel coords | Element selectors + pixel fallback | Resilient to viewport changes; fallback if DOM changes |
-| CSS isolation | `all: initial` reset on root containers + scoped classes | Full immunity from aggressive host-page typography and box-sizing rules while preserving light-DOM DOM queries and html2canvas screenshot support |
-
-## Limitations
-
-- **URL size**: ~8KB practical limit supports roughly 50 annotations depending on comment length (JSON export available for arbitrarily large sessions)
-- **CSP**: Pages with strict Content Security Policy (`script-src`) block bookmarklet `<script>` injection; use the included MV3 browser extension (`npm run build:extension`) to annotate CSP-protected sites
-- **DOM changes**: If the page DOM changes significantly, selectors may not resolve (falls back to pixel coordinates with a warning badge)
-- **Mobile devices**: Bookmarklet runs on mobile but is optimized for desktop; a warning modal informs users of this limitation
-- **No real-time collaboration**: Users share URLs sequentially via chat/email
+[Developing Pinment](DEVELOPING.md) covers builds, the extension, source layout,
+state encoding and validation. [Contributing](CONTRIBUTING.md) describes PRs.
 
 ## Background & inspiration
 
@@ -130,4 +81,4 @@ Inspired by:
 
 ## License
 
-[MIT](LICENSE) -- Copyright (c) 2026 Ken Hawkins
+[MIT](LICENSE) — Copyright (c) 2026 Ken Hawkins

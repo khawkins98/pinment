@@ -16,7 +16,7 @@ Security-sensitive reports: see `SECURITY.md` if present, otherwise email the ma
 ## Proposing changes
 
 1. Fork the repo and branch off `main`.
-2. Run `npm install`, then `npm run dev` for the local site and `npm test` for the Vitest suite.
+2. Follow [Developing Pinment](DEVELOPING.md#run-test-and-build) for the Node/Yarn setup, local site, tests and builds.
 3. Open a pull request as a **draft** while you iterate, then mark ready for review.
 
 If your change touches the URL-state encoding, the lz-string compression boundary, or the bookmarklet loader, please call that out in the PR body — those areas are XSS-sensitive and benefit from extra review.
@@ -28,7 +28,7 @@ If your change touches the URL-state encoding, the lz-string compression boundar
 
 ## Local development
 
-The full quick-start lives in the [README](README.md#quick-start). In short: `npm install && npm run dev`. Tests are Vitest (`npm test`). Build is Vite.
+Use [Developing Pinment](DEVELOPING.md) for commands and build/state details. The [README](README.md) owns the reviewer workflow, sharing limits and visible credits. Keep each explanation in its maintained home; preserve the dated LEARNINGS/CHANGELOG and product-spec records.
 
 ## Testing checklist for risky changes
 
