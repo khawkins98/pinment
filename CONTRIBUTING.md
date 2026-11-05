@@ -28,7 +28,7 @@ If your change touches the URL-state encoding, the lz-string compression boundar
 
 ## Local development
 
-Use [Developing Pinment](DEVELOPING.md) for commands and build/state details. The [README](README.md) owns the reviewer workflow, sharing limits and visible credits. Keep each explanation in its maintained home; preserve the dated LEARNINGS/CHANGELOG and product-spec records.
+Use [Developing Pinment](DEVELOPING.md) for commands, build/state details and [documentation maintenance](DEVELOPING.md#maintaining-documentation).
 
 ## Testing checklist for risky changes
 

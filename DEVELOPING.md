@@ -1,23 +1,37 @@
 # Developing Pinment
 
-Use the [README](README.md#start-a-review) for the reviewer workflow. This guide
-owns contributor commands, source layout and state details. Use Node.js 24 and
-Yarn 1.22, as in [CI](.github/workflows/ci.yml).
+Use Node.js 24 and Yarn 1.22, as in [CI](.github/workflows/ci.yml).
+For reviewing webpages, start with the [README](README.md#start-a-review).
 
 ## Run, test and build
 
 ```sh
 yarn install --frozen-lockfile
 yarn dev                 # Vite serves /pinment/ on its printed local origin
+```
+
+Open `/pinment/` on the printed origin and keep the server running. Install its
+**Pinment (Dev)** bookmarklet, then activate it on a separate page you can access;
+the landing page itself shows help instead of accepting pins. Follow the
+[review steps](README.md#start-a-review) to save a pin.
+
+In another terminal, or after stopping Vite with Ctrl+C:
+
+```sh
 yarn test                # Vitest + jsdom
 yarn build               # Site and standalone bookmarklet in dist/
 yarn build:bookmarklet   # Standalone bookmarklet bundle only
 ```
 
-Vite's base path is `/pinment/`. The landing page sets its bookmarklet loader URL
-from the current origin and that base. During local work, install the local
-**Pinment (Dev)** bookmarklet rather than the hosted production bookmarklet.
+The landing page sets its bookmarklet loader URL from the current origin and
+Vite's `/pinment/` base. A bookmarklet installed from the hosted site loads
+production code instead.
 The production build and extension output are ignored build artifacts.
+
+Share URLs still use the hosted hub in `src/state.js`'s `DEFAULT_BASE_URL`, even
+when annotations come from a local bookmarklet. To inspect the local hub, replace
+only the share URL's origin/path with your local `/pinment/` URL; keep `#data=…`
+intact. This tests the local handoff, not the published hub.
 
 ## Build the extension
 
@@ -34,8 +48,8 @@ background worker, icons and bundled annotation script.
 In Chromium, open `chrome://extensions`, enable Developer mode, choose **Load
 unpacked**, and select `dist/extension/`. Use its toolbar action on the target
 page. The source uses MV3 `activeTab`/`scripting` and `chrome.scripting.executeScript`;
-it skips `chrome:`, `edge:`, `about:` and `chrome-extension:` pages. This guide
-does not establish Firefox extension compatibility or a signed/store package.
+it skips `chrome:`, `edge:`, `about:` and `chrome-extension:` pages. These are
+unpacked Chromium instructions; Firefox compatibility has not been verified.
 Extension injection does not guarantee that CDN-loaded PDF export can pass a
 page's own CSP.
 
@@ -123,6 +137,7 @@ and state which browser/page/CSP checks you actually ran.
 
 Keep the complete reviewer/share workflow and adoption limits in README. Put
 schema, source ownership and command details here; update the relevant home
-instead of adding the same account to both pages. Check labels against the live
+instead of adding the same account to both pages. Keep the landing-page steps and
+shared-review hint consistent with those workflows. Check labels against the live
 UI/source and preserve credits, PRD and dated CHANGELOG/LEARNINGS records. Prefer
 specific limits to “works anywhere” or unlimited-capacity promises.

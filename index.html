@@ -72,7 +72,7 @@
             <div class="step-number">3</div>
             <div class="step-content">
               <h2>Drop pins &amp; comment</h2>
-              <p>Click the bookmarklet, then click anywhere on the page to place a numbered pin. Add your comment and name in the panel that appears.</p>
+              <p>Click the bookmarklet and choose <strong>Start annotating on this page</strong>. Click a location, add your comment and name, then choose <strong>Save</strong>.</p>
             </div>
           </li>
 
@@ -80,7 +80,7 @@
             <div class="step-number">4</div>
             <div class="step-content">
               <h2>Share the URL</h2>
-              <p>Hit <strong>Share</strong> to copy a link. Your colleague opens it, visits the page, clicks the bookmarklet, and sees your pins right where you left them.</p>
+              <p>Choose <strong>Share &amp; Export</strong>, then <strong>Copy</strong>. Recipients install Pinment, choose <strong>Open target page</strong> and <strong>Open page →</strong>, then activate Pinment on that page. Replies need a newly shared link.</p>
             </div>
           </li>
 
@@ -95,7 +95,7 @@
           <div class="feature-card">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 1.5a1.914 1.914 0 0 1 2.707 2.707L5.707 10.707 2.5 12.5l1.793-4.207z"/></svg>
             <h3>Pin comments</h3>
-            <p>Drop numbered pins on any live webpage and attach comments, right where the issue is.</p>
+            <p>Mark locations on the page and attach comments. Page and browser restrictions apply.</p>
           </div>
 
           <div class="feature-card">
@@ -107,13 +107,13 @@
           <div class="feature-card">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4l6-2.5L14 4"/><path d="M2 4v8l6 2.5L14 12V4"/><path d="M8 6.5V14.5"/></svg>
             <h3>Element anchoring</h3>
-            <p>Pins attach to DOM elements via CSS selectors, so they survive responsive layouts.</p>
+            <p>Pins follow matching DOM elements. Changed elements can trigger saved pixel positions; check placement after layout changes.</p>
           </div>
 
           <div class="feature-card">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 10v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M5 4l3-3 3 3"/><path d="M8 1v8"/></svg>
             <h3>Import &amp; export JSON</h3>
-            <p>Save annotation sessions as JSON files. Import them back anytime to continue or share offline.</p>
+            <p>Download JSON from Share &amp; Export. On the reviewed page, activate Pinment and select Choose JSON file… to load a received file.</p>
           </div>
 
           <div class="feature-card">
@@ -143,14 +143,14 @@
           <div class="feature-card">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="1" width="12" height="14" rx="1"/><path d="M5 5h6"/><path d="M5 8h6"/><path d="M5 11h3"/></svg>
             <h3>Export as PDF</h3>
-            <p>Generate a PDF with a full-page screenshot, pin markers, and all comments for offline sharing or archival.</p>
+            <p>Export a screenshot/comment report. PDF libraries load from a CDN; network, CSP or cross-origin image restrictions can prevent export or omit content.</p>
           </div>
 
         </div>
       </section>
 
       <div class="import-section">
-        <p class="import-hint">Have an exported annotation file?</p>
+        <p class="import-hint">Preview an exported JSON file here to find its target URL. Import large reviews directly with Pinment on that page. Copy share URL does not create a link from an imported file.</p>
         <button id="import-json-btn" class="viewer-btn viewer-btn-secondary">Import JSON</button>
       </div>
 
@@ -159,7 +159,7 @@
         <h2>Annotation review</h2>
         <div id="review-meta"></div>
         <div id="review-pins" role="list"></div>
-        <p class="hint">To see these pins on the page: open the target page, click the Pinment bookmarklet, and the share URL will be pre-filled from your clipboard.</p>
+        <p class="hint">Install the Pinment bookmarklet below, choose Open target page and Open page →, then activate Pinment on that page. If pins do not load, paste the original share URL into the welcome dialog and choose Load. Login is still required on private pages; check pin placement if the page has changed.</p>
       </section>
     </main>
 
