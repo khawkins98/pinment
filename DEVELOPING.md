@@ -10,8 +10,8 @@ yarn install --frozen-lockfile
 yarn dev                 # Vite serves /pinment/ on its printed local origin
 ```
 
-Open `/pinment/` on the printed origin and keep the server running. Install its
-**Pinment (Dev)** bookmarklet, then activate it on a separate page you can access;
+Open `/pinment/` on the printed origin and keep the server running. Install the
+local site's **Pinment (Dev)** bookmarklet, then activate it on a separate page you can access;
 the landing page itself shows help instead of accepting pins. Follow the
 [review steps](README.md#start-a-review) to save a pin.
 
@@ -41,8 +41,8 @@ yarn build:extension
 ```
 
 The packager uses an existing `dist/pinment-bookmarklet.js`, or builds one if
-absent. Build the site/bookmarklet first after source changes so the extension
-cannot reuse an old bundle. It writes `dist/extension/` with the manifest,
+absent. After changing the source, build the site/bookmarklet first so the extension
+cannot reuse an old bundle. The packager writes `dist/extension/` with the manifest,
 background worker, icons and bundled annotation script.
 
 In Chromium, open `chrome://extensions`, enable Developer mode, choose **Load
