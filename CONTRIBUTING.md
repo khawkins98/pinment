@@ -4,12 +4,12 @@ Thanks for your interest in Pinment. Contributions are welcome — this is a sma
 
 ## Filing issues
 
-Open an issue at https://github.com/khawkins98/pinment/issues. Useful detail:
+Open an issue at https://github.com/khawkins98/pinment/issues. Include:
 
-- Browser + OS
+- Browser and operating system
 - The page you tried to annotate (or a publicly reachable equivalent)
 - Whether the page sets a strict CSP (the bookmarklet silently fails on some)
-- A short repro
+- Steps to reproduce the problem
 
 Security-sensitive reports: see `SECURITY.md` if present, otherwise email the maintainer directly rather than filing publicly.
 
@@ -17,7 +17,7 @@ Security-sensitive reports: see `SECURITY.md` if present, otherwise email the ma
 
 1. Fork the repo and branch off `main`.
 2. Follow [Developing Pinment](DEVELOPING.md#run-test-and-build) for the Node/Yarn setup, local site, tests and builds.
-3. Open a pull request as a **draft** while you iterate, then mark ready for review.
+3. Open a pull request as a **draft** while you iterate, then mark it ready for review.
 
 If your change touches the URL-state encoding, the lz-string compression boundary, or the bookmarklet loader, please call that out in the PR body — those areas are XSS-sensitive and benefit from extra review.
 

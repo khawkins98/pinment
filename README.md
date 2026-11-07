@@ -26,8 +26,8 @@ load the pins. You still need access to the target page, including any login.
 
 If the pins do not load automatically, paste the original share URL into
 **Paste a share URL to load annotations** in the bookmarklet's welcome dialog
-and choose **Load**. Replies and edits need a newly shared URL; links are snapshots,
-not a live collaboration session.
+and choose **Load**. To share replies or edits, create a new share URL. Links are
+snapshots, not a live collaboration session.
 
 ## Restore a JSON review
 
@@ -37,18 +37,19 @@ that exceeds the app's 8,000-byte URL budget. JSON contains the same review data
 If you need to find that URL, the hub's **Import JSON** displays it.
 
 On the reviewed page, activate Pinment and select **Choose JSON file…** in its
-welcome dialog. An active session also has **Import from JSON**; it asks before
-replacing existing pins. Import large reviews directly on the target page: the
-hub's **Open target page** puts the data back into a URL.
+welcome dialog. If Pinment is already active, choose **Import from JSON**. Pinment
+asks before replacing existing pins. Import large reviews directly on the target
+page: the hub's **Open target page** puts the data back into a URL.
 
 Send the JSON file itself to share an imported review. The hub's **Copy share URL**
-copies its address; importing a file does not add that review to the address.
+copies the hub's current URL; importing a file does not add the review data to
+that URL.
 
 ## Sharing and storage
 
 Share links contain the target URL, comments, authors/replies and browser/viewport
 metadata. Compression is not encryption: anyone with the complete link can read
-that state. Check for sensitive comments or query-string tokens before sharing.
+the review data. Check for sensitive comments or query-string tokens before sharing.
 
 Drafts are stored in the reviewed page's origin in this browser. Recovery can
 help after a reload, but storage can be blocked or cleared; it is not a backup.
