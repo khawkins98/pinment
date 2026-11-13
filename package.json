@@ -25,8 +25,8 @@
   "homepage": "https://github.com/khawkins98/pinment#readme",
   "devDependencies": {
     "esbuild": "^0.28.2",
-    "jsdom": "^30.1.3",
-    "vite": "^8.3.5",
+    "jsdom": "^31.0.1",
+    "vite": "^8.3.8",
     "vitest": "^5.1.0"
   },
   "dependencies": {
